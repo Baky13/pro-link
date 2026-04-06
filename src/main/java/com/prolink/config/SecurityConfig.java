@@ -55,6 +55,7 @@ public class SecurityConfig {
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/", "/index.html", "/static/**", "/favicon.ico", "/manifest.json").permitAll()
+                        .requestMatchers("/assets/**", "/*.js", "/*.css", "/*.svg", "/*.ico", "/*.png", "/*.webp").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
