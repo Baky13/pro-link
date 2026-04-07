@@ -30,5 +30,8 @@ public class ChatRoom {
     private List<ChatMessage> messages;
 
     @Builder.Default
+    private Boolean isArchived = false;
+
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 }

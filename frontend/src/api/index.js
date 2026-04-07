@@ -37,7 +37,6 @@ export const applicationApi = {
 export const profileApi = {
   getWorkerById: id => api.get(`/workers/${id}`),
   searchWorkers: params => api.get('/workers', { params }),
-  searchWorkers: params => api.get('/workers', { params }),
   getWorker: () => api.get('/worker/profile'),
   updateWorker: data => api.put('/worker/profile', data),
   getEmployer: () => api.get('/employer/profile'),
@@ -67,9 +66,13 @@ export const feedbackApi = {
 // Chat
 export const chatApi = {
   getRooms: () => api.get('/chat/rooms'),
+  getArchivedRooms: () => api.get('/chat/rooms/archived'),
   getOrCreateRoom: applicationId => api.post(`/chat/rooms/application/${applicationId}`),
   getMessages: (roomId, params) => api.get(`/chat/rooms/${roomId}/messages`, { params }),
   sendMessage: (roomId, content) => api.post(`/chat/rooms/${roomId}/messages`, { content }),
+  archiveRoom: roomId => api.patch(`/chat/rooms/${roomId}/archive`),
+  unarchiveRoom: roomId => api.patch(`/chat/rooms/${roomId}/unarchive`),
+  deleteRoom: roomId => api.delete(`/chat/rooms/${roomId}`),
 }
 
 // Categories

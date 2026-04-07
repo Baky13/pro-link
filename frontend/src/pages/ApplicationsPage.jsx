@@ -54,6 +54,7 @@ export default function ApplicationsPage() {
 
   return (
     <div style={{ maxWidth: 800, margin: '40px auto', padding: '0 20px' }}>
+      {ConfirmDialogComponent}
       <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 24 }}>{t.myApplications}</h1>
 
       {applications.length === 0 ? (

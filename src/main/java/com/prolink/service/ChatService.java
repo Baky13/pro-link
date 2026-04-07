@@ -29,11 +29,16 @@ public class ChatService {
 
     @Transactional
     public ChatDto.RoomResponse getOrCreateRoom(Long applicationId, Long userId) {
-        return chatRoomRepository.findByApplicationId(applicationId)
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
+
+        Long workerId = application.getWorker().getUser().getId();
+        Long employerId = application.getVacancy().getEmployer().getUser().getId();
+
+        // Ищем существующую комнату между этими двумя пользователями
+        return chatRoomRepository.findByWorkerIdAndEmployerId(workerId, employerId)
                 .map(this::toRoomResponse)
                 .orElseGet(() -> {
-                    Application application = applicationRepository.findById(applicationId)
-                            .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
                     ChatRoom room = ChatRoom.builder()
                             .application(application)
                             .worker(application.getWorker().getUser())
@@ -44,9 +49,47 @@ public class ChatService {
     }
 
     public List<ChatDto.RoomResponse> getUserRooms(Long userId) {
-        return chatRoomRepository.findByUserId(userId).stream()
+        return chatRoomRepository.findActiveByUserId(userId).stream()
                 .map(this::toRoomResponse)
                 .collect(Collectors.toList());
+    }
+
+    public List<ChatDto.RoomResponse> getArchivedRooms(Long userId) {
+        return chatRoomRepository.findArchivedByUserId(userId).stream()
+                .map(this::toRoomResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void archiveRoom(Long roomId, Long userId) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found"));
+        if (!room.getWorker().getId().equals(userId) && !room.getEmployer().getId().equals(userId)) {
+            throw new BadRequestException("Not authorized");
+        }
+        room.setIsArchived(true);
+        chatRoomRepository.save(room);
+    }
+
+    @Transactional
+    public void unarchiveRoom(Long roomId, Long userId) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found"));
+        if (!room.getWorker().getId().equals(userId) && !room.getEmployer().getId().equals(userId)) {
+            throw new BadRequestException("Not authorized");
+        }
+        room.setIsArchived(false);
+        chatRoomRepository.save(room);
+    }
+
+    @Transactional
+    public void deleteRoom(Long roomId, Long userId) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found"));
+        if (!room.getWorker().getId().equals(userId) && !room.getEmployer().getId().equals(userId)) {
+            throw new BadRequestException("Not authorized");
+        }
+        chatRoomRepository.delete(room);
     }
 
     public Page<ChatDto.MessageResponse> getMessages(Long roomId, Long userId, PageRequest pageRequest) {

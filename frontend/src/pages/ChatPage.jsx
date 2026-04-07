@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Send, MessageCircle, Search, ChevronUp } from 'lucide-react'
+import { Send, MessageCircle, Search, ChevronUp, Archive, Trash2, ArchiveRestore, MoreVertical } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
@@ -28,6 +28,8 @@ export default function ChatPage() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [onlineUsers, setOnlineUsers] = useState(new Set())
   const [unreadMap, setUnreadMap] = useState({})
+  const [tab, setTab] = useState('active') // 'active' | 'archived'
+  const [menuOpen, setMenuOpen] = useState(null)
   const bottomRef = useRef(null)
   const messagesRef = useRef(null)
   const stompRef = useRef(null)
@@ -35,15 +37,24 @@ export default function ChatPage() {
 
   useEffect(() => { activeRoomRef.current = activeRoom }, [activeRoom])
 
-  useEffect(() => {
-    if (!user) { navigate('/login'); return }
-    chatApi.getRooms().then(r => {
+  const loadRooms = (currentTab = tab) => {
+    const fetch = currentTab === 'archived' ? chatApi.getArchivedRooms : chatApi.getRooms
+    fetch().then(r => {
       const data = r.data || []
       setRooms(data)
       setFilteredRooms(data)
-      if (!activeRoom && data.length > 0) setActiveRoom(data[0].id)
+      if (!activeRoom && data.length > 0 && currentTab === 'active') setActiveRoom(data[0].id)
     }).finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    if (!user) { navigate('/login'); return }
+    loadRooms()
   }, [user])
+
+  useEffect(() => {
+    loadRooms(tab)
+  }, [tab])
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -95,7 +106,11 @@ export default function ChatPage() {
             const currentRoom = activeRoomRef.current
 
             if (message.roomId === currentRoom) {
-              setMessages(prev => [...prev, message])
+              // Только чужие сообщения — своё уже добавлено локально
+              if (message.senderId !== user.id) {
+                setMessages(prev => [...prev, message])
+                setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+              }
             } else {
               // Toast уведомление если сообщение в другой комнате
               if (message.senderId !== user.id) {
@@ -150,9 +165,16 @@ export default function ChatPage() {
     e.preventDefault()
     if (!input.trim() || !activeRoom || sending) return
     setSending(true)
+    const content = input.trim()
+    setInput('')
     try {
-      await chatApi.sendMessage(activeRoom, input.trim())
-      setInput('')
+      const { data } = await chatApi.sendMessage(activeRoom, content)
+      // Добавляем своё сообщение локально сразу
+      setMessages(prev => [...prev, data])
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    } catch {
+      toast.error('Не удалось отправить')
+      setInput(content)
     } finally { setSending(false) }
   }
 
@@ -160,7 +182,38 @@ export default function ChatPage() {
     setActiveRoom(id)
     setMessages([])
     setUnreadMap(prev => ({ ...prev, [id]: 0 }))
+    setMenuOpen(null)
     navigate(`/chat/${id}`)
+  }
+
+  const handleArchive = async (roomId) => {
+    try {
+      await chatApi.archiveRoom(roomId)
+      if (activeRoom === roomId) setActiveRoom(null)
+      loadRooms(tab)
+      toast.success('Диалог архивирован')
+    } catch { toast.error('Ошибка') }
+    setMenuOpen(null)
+  }
+
+  const handleUnarchive = async (roomId) => {
+    try {
+      await chatApi.unarchiveRoom(roomId)
+      loadRooms(tab)
+      toast.success('Диалог восстановлен')
+    } catch { toast.error('Ошибка') }
+    setMenuOpen(null)
+  }
+
+  const handleDelete = async (roomId) => {
+    if (!window.confirm('Удалить диалог? Все сообщения будут удалены.')) return
+    try {
+      await chatApi.deleteRoom(roomId)
+      if (activeRoom === roomId) setActiveRoom(null)
+      loadRooms(tab)
+      toast.success('Диалог удалён')
+    } catch { toast.error('Ошибка') }
+    setMenuOpen(null)
   }
 
   const getOtherUser = room => {
@@ -183,6 +236,15 @@ export default function ChatPage() {
         {/* Список комнат */}
         <div className="card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '12px 12px 8px', borderBottom: '1px solid var(--border)' }}>
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+              {[{ key: 'active', label: 'Активные' }, { key: 'archived', label: 'Архив' }].map(t => (
+                <button key={t.key} onClick={() => setTab(t.key)}
+                  style={{ flex: 1, padding: '6px', borderRadius: 6, border: 'none', background: tab === t.key ? 'var(--primary)' : 'transparent', color: tab === t.key ? 'white' : 'var(--text-secondary)', fontWeight: 600, fontSize: 12, cursor: 'pointer', transition: 'all 0.15s' }}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-secondary)', borderRadius: 8, padding: '7px 12px' }}>
               <Search size={14} color="var(--text-secondary)" />
               <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
@@ -233,6 +295,47 @@ export default function ChatPage() {
                         </motion.div>
                       </AnimatePresence>
                     )}
+                    {/* Menu button */}
+                    <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={e => { e.stopPropagation(); setMenuOpen(menuOpen === room.id ? null : room.id) }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 4, borderRadius: 6, display: 'flex', opacity: 0.7 }}>
+                        <MoreVertical size={14} />
+                      </button>
+                      <AnimatePresence>
+                        {menuOpen === room.id && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: -4 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.12 }}
+                            className="card"
+                            style={{ position: 'absolute', right: 0, top: '100%', minWidth: 160, padding: 4, zIndex: 300, boxShadow: 'var(--shadow-lg)' }}>
+                            {tab === 'active' ? (
+                              <button onClick={() => handleArchive(room.id)}
+                                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', border: 'none', background: 'transparent', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: 'var(--text)', fontWeight: 500 }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                <Archive size={14} /> Архивировать
+                              </button>
+                            ) : (
+                              <button onClick={() => handleUnarchive(room.id)}
+                                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', border: 'none', background: 'transparent', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: 'var(--text)', fontWeight: 500 }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                <ArchiveRestore size={14} /> Восстановить
+                              </button>
+                            )}
+                            <button onClick={() => handleDelete(room.id)}
+                              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', border: 'none', background: 'transparent', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: 'var(--danger)', fontWeight: 500 }}
+                              onMouseEnter={e => e.currentTarget.style.background = '#fee2e2'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                              <Trash2 size={14} /> Удалить
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
                 </button>
               )
