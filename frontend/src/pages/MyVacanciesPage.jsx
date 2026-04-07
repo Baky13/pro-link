@@ -1,21 +1,21 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Plus, Eye, Users, Pencil, Trash2 } from 'lucide-react'
-import { vacancyApi, applicationApi } from '../api'
+import { vacancyApi } from '../api'
 import { useAuthStore } from '../store'
 import { useT } from '../utils/i18n'
-import { useConfirm } from '../components/ui/ConfirmDialog'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
+import { SkeletonList } from '../components/ui/Skeleton'
 import toast from 'react-hot-toast'
 
 export default function MyVacanciesPage() {
   const { user } = useAuthStore()
-    const t = useT()
+  const t = useT()
   const navigate = useNavigate()
   const [vacancies, setVacancies] = useState([])
   const [loading, setLoading] = useState(true)
-  const { confirm, ConfirmDialogComponent } = useConfirm()
   const [deleting, setDeleting] = useState(null)
-  const [applicantsMap, setApplicantsMap] = useState({})
+  const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, vacancyId: null, title: '' })
 
   useEffect(() => {
     if (user?.role !== 'EMPLOYER') { navigate('/'); return }
@@ -24,28 +24,55 @@ export default function MyVacanciesPage() {
       .finally(() => setLoading(false))
   }, [user])
 
-  const handleDelete = async (id) => {
-    const ok = await confirm('Удалить вакансию? Это действие нельзя отменить.')
-    if (!ok) return
-    setDeleting(id)
+  const handleDelete = async (vacancy) => {
+    setConfirmDelete({ 
+      isOpen: true, 
+      vacancyId: vacancy.id, 
+      title: vacancy.title 
+    })
+  }
+
+  const confirmDeleteVacancy = async () => {
+    const { vacancyId } = confirmDelete
+    setDeleting(vacancyId)
     try {
-      await vacancyApi.delete(id)
-      setVacancies(prev => prev.filter(v => v.id !== id))
+      await vacancyApi.delete(vacancyId)
+      setVacancies(prev => prev.filter(v => v.id !== vacancyId))
       toast.success('Вакансия удалена')
     } catch (e) {
       toast.error(e.response?.data?.message || t.error)
-    } finally { setDeleting(null) }
+    } finally { 
+      setDeleting(null)
+      setConfirmDelete({ isOpen: false, vacancyId: null, title: '' })
+    }
   }
 
   const viewApplications = (vacancyId) => {
     navigate(`/vacancies/${vacancyId}/applications`)
   }
 
-  if (loading) return <div style={{ textAlign: 'center', padding: 80, color: 'var(--text-secondary)' }}>{t.loading}</div>
+  if (loading) return (
+    <div style={{ maxWidth: 900, margin: '40px auto', padding: '0 20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div className="skeleton" style={{ width: 200, height: 32 }} />
+        <div className="skeleton" style={{ width: 150, height: 40, borderRadius: 8 }} />
+      </div>
+      <SkeletonList count={3} />
+    </div>
+  )
 
   return (
     <div style={{ maxWidth: 900, margin: '40px auto', padding: '0 20px' }}>
-      {ConfirmDialogComponent}
+      <ConfirmDialog
+        isOpen={confirmDelete.isOpen}
+        onClose={() => setConfirmDelete({ isOpen: false, vacancyId: null, title: '' })}
+        onConfirm={confirmDeleteVacancy}
+        title="Удалить вакансию?"
+        message={`Вы уверены, что хотите удалить вакансию "${confirmDelete.title}"? Это действие нельзя отменить.`}
+        confirmText="Удалить"
+        cancelText="Отмена"
+        type="danger"
+      />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h1 style={{ fontSize: 24, fontWeight: 800 }}>{t.myVacancies}</h1>
         <Link to="/vacancies/create" className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -98,7 +125,7 @@ export default function MyVacanciesPage() {
                     <Pencil size={13} />
                   </button>
                   <button className="btn-ghost" style={{ fontSize: 13, padding: '6px 12px', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 4 }}
-                    onClick={() => handleDelete(v.id)} disabled={deleting === v.id}>
+                    onClick={() => handleDelete(v)} disabled={deleting === v.id}>
                     <Trash2 size={13} />
                   </button>
                 </div>

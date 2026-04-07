@@ -59,12 +59,6 @@ export default function ProfileProgress({ profile, role }) {
           </div>
         ))}
       </div>
-
-      {percent < 100 && (
-        <Link to="/profile" className="btn-primary" style={{ display: 'inline-flex', marginTop: 14, padding: '8px 20px', fontSize: 13 }}>
-          Заполнить профиль
-        </Link>
-      )}
     </div>
   )
 }

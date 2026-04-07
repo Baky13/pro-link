@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MessageCircle, X } from 'lucide-react'
 import { applicationApi, chatApi } from '../api'
-
 import { useT } from '../utils/i18n'
-import { useConfirm } from '../components/ui/ConfirmDialog'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
+import { SkeletonList } from '../components/ui/Skeleton'
 import toast from 'react-hot-toast'
 
 const STATUS_COLORS = {
@@ -15,12 +15,12 @@ const STATUS_COLORS = {
 }
 
 export default function ApplicationsPage() {
-    const t = useT()
+  const t = useT()
   const navigate = useNavigate()
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
-  const { confirm, ConfirmDialogComponent } = useConfirm()
   const [cancelling, setCancelling] = useState(null)
+  const [confirmCancel, setConfirmCancel] = useState({ isOpen: false, applicationId: null })
 
   useEffect(() => {
     applicationApi.getMy({ size: 50 })
@@ -28,17 +28,23 @@ export default function ApplicationsPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const handleCancel = async (id) => {
-    const ok = await confirm('Отменить отклик? Вы сможете откликнуться снова.')
-    if (!ok) return
-    setCancelling(id)
+  const handleCancel = (id) => {
+    setConfirmCancel({ isOpen: true, applicationId: id })
+  }
+
+  const confirmCancelApplication = async () => {
+    const { applicationId } = confirmCancel
+    setCancelling(applicationId)
     try {
-      await applicationApi.cancel(id)
-      setApplications(prev => prev.filter(a => a.id !== id))
+      await applicationApi.cancel(applicationId)
+      setApplications(prev => prev.filter(a => a.id !== applicationId))
       toast.success('Отклик отменён')
     } catch (e) {
       toast.error(e.response?.data?.message || t.error)
-    } finally { setCancelling(null) }
+    } finally { 
+      setCancelling(null)
+      setConfirmCancel({ isOpen: false, applicationId: null })
+    }
   }
 
   const handleOpenChat = async (app) => {
@@ -50,11 +56,25 @@ export default function ApplicationsPage() {
     }
   }
 
-  if (loading) return <div style={{ textAlign: 'center', padding: 80, color: 'var(--text-secondary)' }}>{t.loading}</div>
+  if (loading) return (
+    <div style={{ maxWidth: 800, margin: '40px auto', padding: '0 20px' }}>
+      <div className="skeleton" style={{ width: 200, height: 32, marginBottom: 24 }} />
+      <SkeletonList count={3} />
+    </div>
+  )
 
   return (
     <div style={{ maxWidth: 800, margin: '40px auto', padding: '0 20px' }}>
-      {ConfirmDialogComponent}
+      <ConfirmDialog
+        isOpen={confirmCancel.isOpen}
+        onClose={() => setConfirmCancel({ isOpen: false, applicationId: null })}
+        onConfirm={confirmCancelApplication}
+        title="Отменить отклик?"
+        message="Вы уверены, что хотите отменить отклик? Вы сможете откликнуться снова."
+        confirmText="Отменить"
+        cancelText="Оставить"
+        type="warning"
+      />
       <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 24 }}>{t.myApplications}</h1>
 
       {applications.length === 0 ? (

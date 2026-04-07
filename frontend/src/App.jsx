@@ -89,8 +89,38 @@ export default function App() {
             boxShadow: 'var(--shadow-md)',
             fontSize: 14,
             fontWeight: 500,
+            maxWidth: 400,
+            padding: '12px 16px'
           },
-          duration: 3000,
+          duration: 5000,
+          success: {
+            iconTheme: {
+              primary: 'var(--success)',
+              secondary: 'white'
+            },
+            style: {
+              borderLeft: '4px solid var(--success)'
+            }
+          },
+          error: {
+            iconTheme: {
+              primary: 'var(--danger)',
+              secondary: 'white'
+            },
+            style: {
+              borderLeft: '4px solid var(--danger)'
+            },
+            duration: 6000
+          },
+          loading: {
+            iconTheme: {
+              primary: 'var(--primary)',
+              secondary: 'white'
+            },
+            style: {
+              borderLeft: '4px solid var(--primary)'
+            }
+          }
         }}
       />
     </BrowserRouter>
