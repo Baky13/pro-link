@@ -86,6 +86,11 @@ export default function ChatPage() {
     setUnreadMap(prev => ({ ...prev, [activeRoom]: 0 }))
     // Помечаем как прочитанные только уведомления этого чата
     notificationApi.markChatRead(activeRoom).catch(() => {})
+    // Обновляем глобальный счетчик уведомлений
+    notificationApi.getUnreadCount().then(r => {
+      const { setUnreadCount } = require('../store').useNotifStore.getState()
+      setUnreadCount(r.data.count || 0)
+    }).catch(() => {})
   }, [activeRoom])
 
   useEffect(() => {

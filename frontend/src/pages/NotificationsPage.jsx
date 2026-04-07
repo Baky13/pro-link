@@ -39,22 +39,42 @@ export default function NotificationsPage() {
 
   const handleClick = async (n) => {
     if (!n.isRead) {
-      setNotifications(prev => prev.map(item =>
-        item.id === n.id ? { ...item, isRead: true } : item
-      ))
-      decrement()
       // Помечаем как прочитанные только уведомления этого чата, если это сообщение
       try {
         if (n.type === 'NEW_MESSAGE' && n.referenceId) {
           await notificationApi.markChatRead(n.referenceId)
+          // Считаем сколько непрочитанных уведомлений этого чата будет помечено
+          const chatUnreadCount = notifications.filter(item => 
+            item.type === 'NEW_MESSAGE' && 
+            item.referenceId === n.referenceId && 
+            !item.isRead
+          ).length
+          
           // Обновляем все уведомления этого чата в локальном состоянии
           setNotifications(prev => prev.map(item =>
             item.type === 'NEW_MESSAGE' && item.referenceId === n.referenceId
               ? { ...item, isRead: true }
               : item
           ))
+          
+          // Уменьшаем счетчик на количество помеченных уведомлений
+          for (let i = 0; i < chatUnreadCount; i++) {
+            decrement()
+          }
+        } else {
+          // Для других типов уведомлений помечаем только одно
+          setNotifications(prev => prev.map(item =>
+            item.id === n.id ? { ...item, isRead: true } : item
+          ))
+          decrement()
         }
-      } catch {}
+      } catch {
+        // В случае ошибки помечаем только текущее уведомление
+        setNotifications(prev => prev.map(item =>
+          item.id === n.id ? { ...item, isRead: true } : item
+        ))
+        decrement()
+      }
     }
     
     // Навигация по типу уведомления
