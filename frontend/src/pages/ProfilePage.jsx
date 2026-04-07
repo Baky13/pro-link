@@ -4,6 +4,7 @@ import { useAuthStore } from '../store'
 import { useT } from '../utils/i18n'
 import toast from 'react-hot-toast'
 import { User, Briefcase, Globe, Plus, Trash2, Building2 } from 'lucide-react'
+import ProfileProgress from '../components/ProfileProgress'
 
 export default function ProfilePage() {
   const { user } = useAuthStore()
@@ -82,6 +83,7 @@ export default function ProfilePage() {
   return (
     <div style={{ maxWidth: 800, margin: '40px auto', padding: '0 20px' }}>
       <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 24 }}>{t.myProfile}</h1>
+      <ProfileProgress profile={profile} role={user?.role} />
 
       <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 

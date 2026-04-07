@@ -151,6 +151,31 @@ export default function HomePage() {
       {/* ── Content ── */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: 'clamp(32px, 5vw, 56px) 20px' }}>
 
+        {/* How it works */}
+        <section style={{ marginBottom: 64, textAlign: 'center' }}>
+          <h2 style={{ fontSize: 'clamp(20px, 3vw, 28px)', fontWeight: 800, marginBottom: 8 }}>Как это работает</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 15, marginBottom: 36 }}>Найти работу за 3 простых шага</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
+            {[
+              { step: '01', icon: '👤', title: 'Создай профиль', desc: 'Зарегистрируйся и заполни свой профиль с навыками и опытом' },
+              { step: '02', icon: '🔍', title: 'Найди вакансию', desc: 'Используй фильтры по зарплате, городу и типу занятости' },
+              { step: '03', icon: '💬', title: 'Откликнись', desc: 'Отправь отклик и общайся с работодателем напрямую в чате' },
+            ].map((item, i) => (
+              <motion.div key={i}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="card"
+                style={{ padding: '28px 24px', textAlign: 'center' }}>
+                <div style={{ fontSize: 36, marginBottom: 12 }}>{item.icon}</div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--primary)', letterSpacing: 1, marginBottom: 8 }}>{item.step}</div>
+                <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>{item.title}</h3>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
         {/* Categories */}
         <motion.section
           initial="initial"

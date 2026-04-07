@@ -53,12 +53,20 @@ export default function Navbar() {
 
   const navLinks = [
     { to: '/vacancies', label: t.findJob },
-    ...(user?.role === 'EMPLOYER' ? [{ to: '/vacancies/create', label: t.postVacancy }] : []),
+    { to: '/map', label: '🗺️ Карта' },
+    ...(user?.role === 'EMPLOYER' ? [
+      { to: '/dashboard', label: '📊 Дашборд' },
+      { to: '/workers', label: '👥 Сотрудники' },
+      { to: '/vacancies/create', label: t.postVacancy },
+    ] : []),
   ]
 
   const userMenuLinks = [
     { to: '/profile', label: t.myProfile, icon: '👤' },
-    ...(user?.role === 'WORKER' ? [{ to: '/applications', label: t.myApplications, icon: '📋' }] : []),
+    ...(user?.role === 'WORKER' ? [
+      { to: '/applications', label: t.myApplications, icon: '📋' },
+      { to: '/saved', label: 'Сохранённые', icon: '🔖' },
+    ] : []),
     ...(user?.role === 'EMPLOYER' ? [{ to: '/my-vacancies', label: t.myVacancies, icon: '💼' }] : []),
     { to: '/chat', label: 'Чаты', icon: '💬' },
     { to: '/notifications', label: t.notifications, icon: '🔔' },

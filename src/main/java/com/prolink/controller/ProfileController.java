@@ -30,6 +30,16 @@ public class ProfileController {
         return profileService.getWorkerById(id);
     }
 
+    @GetMapping("/workers")
+    public org.springframework.data.domain.Page<WorkerDto.Response> searchWorkers(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) Integer minExp,
+            @RequestParam(required = false) Integer maxSalary,
+            @org.springframework.data.web.PageableDefault(size = 20) org.springframework.data.domain.Pageable pageable) {
+        return profileService.searchWorkers(search, city, minExp, maxSalary, pageable);
+    }
+
     @PutMapping("/worker/profile")
     public WorkerDto.Response updateWorkerProfile(@AuthenticationPrincipal User user,
                                                    @RequestBody WorkerDto.Request request) {

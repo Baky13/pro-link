@@ -22,6 +22,11 @@ import NotificationsPage from './pages/NotificationsPage'
 import MyVacanciesPage from './pages/MyVacanciesPage'
 import VacancyApplicationsPage from './pages/VacancyApplicationsPage'
 import WorkerProfilePage from './pages/WorkerProfilePage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import SavedVacanciesPage from './pages/SavedVacanciesPage'
+import VacancyMapPage from './pages/VacancyMapPage'
+import WorkersPage from './pages/WorkersPage'
+import EmployerDashboard from './pages/EmployerDashboard'
 import NotFoundPage from './pages/NotFoundPage'
 
 function AnimatedRoutes() {
@@ -29,22 +34,35 @@ function AnimatedRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
+        {/* Public */}
         <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
         <Route path="/vacancies" element={<PageTransition><VacanciesPage /></PageTransition>} />
         <Route path="/vacancies/:id" element={<PageTransition><VacancyDetailPage /></PageTransition>} />
         <Route path="/employers/:id" element={<PageTransition><EmployerProfilePage /></PageTransition>} />
+        <Route path="/workers/:id" element={<PageTransition><WorkerProfilePage /></PageTransition>} />
+        <Route path="/workers" element={<PageTransition><WorkersPage /></PageTransition>} />
+        <Route path="/map" element={<PageTransition><VacancyMapPage /></PageTransition>} />
         <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
         <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />
+        <Route path="/forgot-password" element={<PageTransition><ForgotPasswordPage /></PageTransition>} />
+
+        {/* Auth required */}
         <Route path="/profile" element={<RequireAuth><PageTransition><ProfilePage /></PageTransition></RequireAuth>} />
         <Route path="/notifications" element={<RequireAuth><PageTransition><NotificationsPage /></PageTransition></RequireAuth>} />
         <Route path="/chat" element={<RequireAuth><PageTransition><ChatPage /></PageTransition></RequireAuth>} />
         <Route path="/chat/:roomId" element={<RequireAuth><PageTransition><ChatPage /></PageTransition></RequireAuth>} />
+        <Route path="/saved" element={<RequireAuth><PageTransition><SavedVacanciesPage /></PageTransition></RequireAuth>} />
+
+        {/* Worker only */}
         <Route path="/applications" element={<RequireRole role="WORKER"><PageTransition><ApplicationsPage /></PageTransition></RequireRole>} />
+
+        {/* Employer only */}
+        <Route path="/dashboard" element={<RequireRole role="EMPLOYER"><PageTransition><EmployerDashboard /></PageTransition></RequireRole>} />
         <Route path="/vacancies/create" element={<RequireRole role="EMPLOYER"><PageTransition><CreateVacancyPage /></PageTransition></RequireRole>} />
         <Route path="/vacancies/:id/edit" element={<RequireRole role="EMPLOYER"><PageTransition><EditVacancyPage /></PageTransition></RequireRole>} />
         <Route path="/vacancies/:id/applications" element={<RequireRole role="EMPLOYER"><PageTransition><VacancyApplicationsPage /></PageTransition></RequireRole>} />
         <Route path="/my-vacancies" element={<RequireRole role="EMPLOYER"><PageTransition><MyVacanciesPage /></PageTransition></RequireRole>} />
-        <Route path="/workers/:id" element={<PageTransition><WorkerProfilePage /></PageTransition>} />
+
         <Route path="*" element={<PageTransition><NotFoundPage /></PageTransition>} />
       </Routes>
     </AnimatePresence>
@@ -53,7 +71,6 @@ function AnimatedRoutes() {
 
 export default function App() {
   const { init } = useThemeStore()
-
   useEffect(() => { init() }, [])
 
   return (

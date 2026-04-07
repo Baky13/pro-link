@@ -1,16 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Send, MessageCircle, Search, ChevronUp } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import { chatApi, notificationApi } from '../api'
 import { useAuthStore } from '../store'
 import { useT } from '../utils/i18n'
+import toast from 'react-hot-toast'
 
 export default function ChatPage() {
   const { roomId } = useParams()
   const { user } = useAuthStore()
-    const t = useT()
+  const t = useT()
   const navigate = useNavigate()
 
   const [rooms, setRooms] = useState([])
@@ -24,9 +26,14 @@ export default function ChatPage() {
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [onlineUsers, setOnlineUsers] = useState(new Set())
+  const [unreadMap, setUnreadMap] = useState({})
   const bottomRef = useRef(null)
   const messagesRef = useRef(null)
   const stompRef = useRef(null)
+  const activeRoomRef = useRef(activeRoom)
+
+  useEffect(() => { activeRoomRef.current = activeRoom }, [activeRoom])
 
   useEffect(() => {
     if (!user) { navigate('/login'); return }
@@ -38,7 +45,6 @@ export default function ChatPage() {
     }).finally(() => setLoading(false))
   }, [user])
 
-  // Поиск по чатам
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredRooms(rooms)
@@ -51,7 +57,6 @@ export default function ChatPage() {
     }
   }, [searchQuery, rooms])
 
-  // Загружаем сообщения при смене комнаты
   useEffect(() => {
     if (!activeRoom) return
     setPage(0)
@@ -61,33 +66,59 @@ export default function ChatPage() {
       setMessages(content)
       setHasMore(!r.data.last)
     })
+    setUnreadMap(prev => ({ ...prev, [activeRoom]: 0 }))
     notificationApi.markAllRead().catch(() => {})
   }, [activeRoom])
 
-  // Скролл вниз при первой загрузке
-  useEffect(() => {
-    if (page === 0) bottomRef.current?.scrollIntoView({ behavior: 'auto' })
-  }, [messages.length > 0 && page === 0])
-
-  // Скролл вниз при новом сообщении
   useEffect(() => {
     if (messages.length > 0 && page === 0) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
     }
   }, [messages.length])
 
   // WebSocket
   useEffect(() => {
-    if (!activeRoom || !user) return
+    if (!user) return
     const token = localStorage.getItem('accessToken')
     const client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS(
+        window.location.hostname === 'localhost'
+          ? 'http://localhost:8080/ws'
+          : `${window.location.origin}/ws`
+      ),
       connectHeaders: { Authorization: `Bearer ${token}` },
       onConnect: () => {
-        client.subscribe(`/topic/room/${activeRoom}`, msg => {
-          const message = JSON.parse(msg.body)
-          setMessages(prev => [...prev, message])
-          setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+        // Subscribe to all rooms
+        rooms.forEach(room => {
+          client.subscribe(`/topic/room/${room.id}`, msg => {
+            const message = JSON.parse(msg.body)
+            const currentRoom = activeRoomRef.current
+
+            if (message.roomId === currentRoom) {
+              setMessages(prev => [...prev, message])
+            } else {
+              // Toast уведомление если сообщение в другой комнате
+              if (message.senderId !== user.id) {
+                toast(`💬 ${message.senderName}: ${message.content.slice(0, 40)}${message.content.length > 40 ? '...' : ''}`, {
+                  duration: 4000,
+                  style: { cursor: 'pointer' },
+                  onClick: () => handleRoomSelect(message.roomId),
+                })
+                setUnreadMap(prev => ({ ...prev, [message.roomId]: (prev[message.roomId] || 0) + 1 }))
+              }
+            }
+          })
+        })
+
+        // Online presence
+        client.subscribe(`/user/queue/online`, msg => {
+          const data = JSON.parse(msg.body)
+          setOnlineUsers(prev => {
+            const next = new Set(prev)
+            if (data.online) next.add(data.userId)
+            else next.delete(data.userId)
+            return next
+          })
         })
       },
       reconnectDelay: 3000,
@@ -95,7 +126,7 @@ export default function ChatPage() {
     client.activate()
     stompRef.current = client
     return () => { client.deactivate() }
-  }, [activeRoom, user])
+  }, [user, rooms])
 
   const loadMore = async () => {
     if (loadingMore || !hasMore) return
@@ -109,7 +140,6 @@ export default function ChatPage() {
       setMessages(prev => [...older, ...prev])
       setHasMore(!r.data.last)
       setPage(nextPage)
-      // Сохраняем позицию скролла
       setTimeout(() => {
         if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight - prevScrollHeight
       }, 0)
@@ -129,6 +159,7 @@ export default function ChatPage() {
   const handleRoomSelect = id => {
     setActiveRoom(id)
     setMessages([])
+    setUnreadMap(prev => ({ ...prev, [id]: 0 }))
     navigate(`/chat/${id}`)
   }
 
@@ -151,7 +182,6 @@ export default function ChatPage() {
 
         {/* Список комнат */}
         <div className="card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          {/* Поиск */}
           <div style={{ padding: '12px 12px 8px', borderBottom: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-secondary)', borderRadius: 8, padding: '7px 12px' }}>
               <Search size={14} color="var(--text-secondary)" />
@@ -172,21 +202,37 @@ export default function ChatPage() {
             ) : filteredRooms.map(room => {
               const other = getOtherUser(room)
               const isActive = room.id === activeRoom
+              const isOnline = onlineUsers.has(other?.id)
+              const unread = unreadMap[room.id] || 0
               return (
                 <button key={room.id} onClick={() => handleRoomSelect(room.id)}
                   style={{ width: '100%', padding: '14px 16px', border: 'none', textAlign: 'left', cursor: 'pointer', background: isActive ? 'var(--primary-light)' : 'transparent', borderLeft: isActive ? '3px solid var(--primary)' : '3px solid transparent', transition: 'all 0.15s' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, background: isActive ? 'var(--primary)' : 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, color: isActive ? 'white' : 'var(--text-secondary)' }}>
-                      {other?.firstName?.[0]?.toUpperCase() || '?'}
+                    {/* Avatar with online dot */}
+                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: isActive ? 'var(--primary)' : 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, color: isActive ? 'white' : 'var(--text-secondary)' }}>
+                        {other?.firstName?.[0]?.toUpperCase() || '?'}
+                      </div>
+                      {isOnline && (
+                        <div style={{ position: 'absolute', bottom: 1, right: 1, width: 10, height: 10, borderRadius: '50%', background: '#10b981', border: '2px solid var(--bg-card)' }} />
+                      )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 600, fontSize: 14, color: isActive ? 'var(--primary)' : 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {other?.firstName} {other?.lastName}
                       </div>
-                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
-                        {user.role === 'WORKER' ? 'Работодатель' : 'Соискатель'}
+                      <div style={{ fontSize: 12, color: isOnline ? '#10b981' : 'var(--text-secondary)', marginTop: 2, fontWeight: isOnline ? 600 : 400 }}>
+                        {isOnline ? '● Онлайн' : user.role === 'WORKER' ? 'Работодатель' : 'Соискатель'}
                       </div>
                     </div>
+                    {unread > 0 && (
+                      <AnimatePresence>
+                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
+                          style={{ minWidth: 20, height: 20, borderRadius: 10, background: 'var(--primary)', color: 'white', fontSize: 11, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px', flexShrink: 0 }}>
+                          {unread}
+                        </motion.div>
+                      </AnimatePresence>
+                    )}
                   </div>
                 </button>
               )
@@ -205,18 +251,24 @@ export default function ChatPage() {
             <>
               {activeRoomData && (
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'white', fontSize: 15 }}>
-                    {getOtherUser(activeRoomData)?.firstName?.[0]?.toUpperCase()}
+                  <div style={{ position: 'relative' }}>
+                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'white', fontSize: 15 }}>
+                      {getOtherUser(activeRoomData)?.firstName?.[0]?.toUpperCase()}
+                    </div>
+                    {onlineUsers.has(getOtherUser(activeRoomData)?.id) && (
+                      <div style={{ position: 'absolute', bottom: 1, right: 1, width: 10, height: 10, borderRadius: '50%', background: '#10b981', border: '2px solid var(--bg-card)' }} />
+                    )}
                   </div>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: 15 }}>{getOtherUser(activeRoomData)?.firstName} {getOtherUser(activeRoomData)?.lastName}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{user.role === 'WORKER' ? 'Работодатель' : 'Соискатель'}</div>
+                    <div style={{ fontSize: 12, color: onlineUsers.has(getOtherUser(activeRoomData)?.id) ? '#10b981' : 'var(--text-secondary)', fontWeight: onlineUsers.has(getOtherUser(activeRoomData)?.id) ? 600 : 400 }}>
+                      {onlineUsers.has(getOtherUser(activeRoomData)?.id) ? '● Онлайн' : user.role === 'WORKER' ? 'Работодатель' : 'Соискатель'}
+                    </div>
                   </div>
                 </div>
               )}
 
               <div ref={messagesRef} style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {/* Кнопка загрузить ещё */}
                 {hasMore && (
                   <div style={{ textAlign: 'center', marginBottom: 8 }}>
                     <button className="btn-ghost" style={{ fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}
@@ -236,7 +288,11 @@ export default function ChatPage() {
                   const isMine = msg.senderId === user.id
                   const showName = !isMine && (i === 0 || messages[i - 1]?.senderId !== msg.senderId)
                   return (
-                    <div key={msg.id || i} style={{ display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start' }}>
+                    <motion.div key={msg.id || i}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start' }}>
                       {showName && <span style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 2, marginLeft: 4 }}>{msg.senderName}</span>}
                       <div style={{ maxWidth: '70%', padding: '10px 14px', borderRadius: isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px', background: isMine ? 'var(--primary)' : 'var(--bg-secondary)', color: isMine ? 'white' : 'var(--text)', fontSize: 14, lineHeight: 1.5, wordBreak: 'break-word' }}>
                         {msg.content}
@@ -245,7 +301,7 @@ export default function ChatPage() {
                         {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' }) : ''}
                         {isMine && <span style={{ marginLeft: 4 }}>{msg.isRead ? '✓✓' : '✓'}</span>}
                       </span>
-                    </div>
+                    </motion.div>
                   )
                 })}
                 <div ref={bottomRef} />
@@ -258,10 +314,11 @@ export default function ChatPage() {
                   style={{ flex: 1, resize: 'none', border: '1.5px solid var(--border)', borderRadius: 10, padding: '10px 14px', fontSize: 14, fontFamily: 'inherit', background: 'var(--bg-secondary)', color: 'var(--text)', outline: 'none', maxHeight: 120, overflowY: 'auto', lineHeight: 1.5, transition: 'border-color 0.15s' }}
                   onFocus={e => e.target.style.borderColor = 'var(--primary)'}
                   onBlur={e => e.target.style.borderColor = 'var(--border)'} />
-                <button type="submit" disabled={!input.trim() || sending}
-                  style={{ width: 42, height: 42, borderRadius: 10, border: 'none', flexShrink: 0, background: input.trim() ? 'var(--primary)' : 'var(--bg-secondary)', color: input.trim() ? 'white' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: input.trim() ? 'pointer' : 'default', transition: 'all 0.15s' }}>
+                <motion.button type="submit" disabled={!input.trim() || sending}
+                  whileTap={{ scale: 0.9 }}
+                  style={{ width: 42, height: 42, borderRadius: 10, border: 'none', flexShrink: 0, background: input.trim() ? 'var(--primary)' : 'var(--bg-secondary)', color: input.trim() ? 'white' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: input.trim() ? 'pointer' : 'default', transition: 'background 0.15s' }}>
                   <Send size={18} />
-                </button>
+                </motion.button>
               </form>
             </>
           )}

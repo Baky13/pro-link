@@ -5,6 +5,8 @@ export const authApi = {
   register: data => api.post('/auth/register', data),
   login: data => api.post('/auth/login', data),
   logout: () => api.post('/auth/logout'),
+  forgotPassword: email => api.post('/auth/forgot-password', { email }),
+  resetPassword: (token, newPassword) => api.post('/auth/reset-password', { token, newPassword }),
 }
 
 // Vacancies
@@ -34,6 +36,8 @@ export const applicationApi = {
 // Profiles
 export const profileApi = {
   getWorkerById: id => api.get(`/workers/${id}`),
+  searchWorkers: params => api.get('/workers', { params }),
+  searchWorkers: params => api.get('/workers', { params }),
   getWorker: () => api.get('/worker/profile'),
   updateWorker: data => api.put('/worker/profile', data),
   getEmployer: () => api.get('/employer/profile'),

@@ -54,6 +54,9 @@ public class ApplicationController {
     public ResponseEntity<java.util.Map<String, Object>> check(
             @RequestParam Long vacancyId,
             @AuthenticationPrincipal User user) {
+        if (user.getRole() != User.Role.WORKER) {
+            return ResponseEntity.ok(java.util.Map.of("applied", false));
+        }
         return ResponseEntity.ok(applicationService.checkApplication(vacancyId, user.getId()));
     }
 

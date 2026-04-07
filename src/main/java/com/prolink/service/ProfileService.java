@@ -39,6 +39,13 @@ public class ProfileService {
         return toWorkerResponse(profile);
     }
 
+    public org.springframework.data.domain.Page<WorkerDto.Response> searchWorkers(
+            String search, String city, Integer minExp, Integer maxSalary,
+            org.springframework.data.domain.Pageable pageable) {
+        return workerProfileRepository.searchWorkers(search, city, minExp, maxSalary, pageable)
+                .map(this::toWorkerResponse);
+    }
+
     public WorkerDto.Response getWorkerProfile(Long userId) {
         WorkerProfile profile = workerProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Worker profile not found"));

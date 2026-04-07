@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { MapPin, Clock, Users, Eye, Bookmark, BookmarkCheck, ArrowLeft, ExternalLink } from 'lucide-react'
+import { MapPin, Clock, Users, Eye, Bookmark, BookmarkCheck, ArrowLeft, ExternalLink, Share2 } from 'lucide-react'
 import { vacancyApi, applicationApi, chatApi } from '../api'
 import { useAuthStore } from '../store'
 import { useT } from '../utils/i18n'
@@ -64,6 +64,11 @@ export default function VacancyDetailPage() {
     } catch { toast.error(t.error + ': ' + t.noData) }
   }
 
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href)
+    toast.success('Ссылка скопирована!')
+  }
+
   const handleSave = async () => {
     if (!user) { navigate('/login'); return }
     try { await vacancyApi.toggleSave(id); setSaved(v => !v) } catch {}
@@ -99,10 +104,16 @@ export default function VacancyDetailPage() {
 
   return (
     <div style={{ maxWidth: 900, margin: '40px auto', padding: '0 20px' }}>
-      <button className="btn-ghost" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6 }}
-        onClick={() => navigate(-1)}>
-        <ArrowLeft size={16} /> {t.back}
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <button className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+          onClick={() => navigate(-1)}>
+          <ArrowLeft size={16} /> {t.back}
+        </button>
+        <button className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+          onClick={handleShare}>
+          <Share2 size={16} /> Поделиться
+        </button>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 24, alignItems: 'start' }}>
 
