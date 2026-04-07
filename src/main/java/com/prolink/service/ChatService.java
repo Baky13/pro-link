@@ -99,6 +99,7 @@ public class ChatService {
             throw new BadRequestException("Not authorized");
         }
         chatMessageRepository.markAsRead(roomId, userId);
+        notificationService.markChatNotificationsAsRead(userId, roomId);
         return chatMessageRepository.findByRoomIdOrderByCreatedAtAsc(roomId, pageRequest).map(this::toMessageResponse);
     }
 

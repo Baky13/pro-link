@@ -34,4 +34,9 @@ public class NotificationController {
     public void markAllAsRead(@AuthenticationPrincipal User user) {
         notificationService.markAllAsRead(user.getId());
     }
+
+    @PostMapping("/read-chat/{roomId}")
+    public void markChatAsRead(@PathVariable Long roomId, @AuthenticationPrincipal User user) {
+        notificationService.markChatNotificationsAsRead(user.getId(), roomId);
+    }
 }

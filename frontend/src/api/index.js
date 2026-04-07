@@ -55,13 +55,8 @@ export const reviewApi = {
   getAll: (employerId, params) => api.get(`/employers/${employerId}/reviews`, { params }),
 }
 
-// Company feedback
-export const feedbackApi = {
-  addComplaint: (employerId, data) => api.post(`/employers/${employerId}/complaints`, data),
-  addExitReason: (employerId, data) => api.post(`/employers/${employerId}/exit-reasons`, data),
-  getExitStats: employerId => api.get(`/employers/${employerId}/exit-reasons`),
-  calculateSalary: data => api.post('/salary/calculate', data),
-}
+// Company feedback - не реализовано на бэкенде, оставлено для будущего
+// export const feedbackApi = { ... }
 
 // Chat
 export const chatApi = {
@@ -85,4 +80,5 @@ export const notificationApi = {
   getAll: params => api.get('/notifications', { params }),
   getUnreadCount: () => api.get('/notifications/unread-count'),
   markAllRead: () => api.post('/notifications/read-all'),
+  markChatRead: roomId => api.post(`/notifications/read-chat/${roomId}`),
 }

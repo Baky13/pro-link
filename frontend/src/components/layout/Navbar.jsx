@@ -2,19 +2,19 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Sun, Moon, Bell, ChevronDown, Menu, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useAuthStore, useThemeStore } from '../../store'
+import { useAuthStore, useThemeStore, useNotifStore } from '../../store'
 import { useT } from '../../utils/i18n'
 import { authApi, notificationApi } from '../../api'
 
 export default function Navbar() {
   const { user, logout } = useAuthStore()
   const { theme, toggle } = useThemeStore()
+  const { unreadCount, setUnreadCount } = useNotifStore()
   const t = useT()
   const navigate = useNavigate()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [unreadCount, setUnreadCount] = useState(0)
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {

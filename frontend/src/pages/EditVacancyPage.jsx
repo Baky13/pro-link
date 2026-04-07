@@ -77,7 +77,8 @@ export default function EditVacancyPage() {
   const addSkill = () => {
     const trimmed = skillInput.trim()
     if (!trimmed) return
-    if (form.skills.includes(trimmed)) { toast.error('Такой навык уже добавлен'); return }
+    const exists = form.skills.some(s => s.toLowerCase() === trimmed.toLowerCase())
+    if (exists) { toast.error('Такой навык уже добавлен'); return }
     set('skills', [...form.skills, trimmed])
     setSkillInput('')
   }

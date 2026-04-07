@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,10 +19,8 @@ public class CompanyFeedbackService {
 
     private final CompanyComplaintRepository complaintRepository;
     private final CompanyExitReasonRepository exitReasonRepository;
-    private final SalaryStatRepository salaryStatRepository;
     private final EmployerProfileRepository employerProfileRepository;
     private final UserRepository userRepository;
-    private final CategoryRepository categoryRepository;
     private final NotificationService notificationService;
 
     private static final int BLACKLIST_THRESHOLD = 10;
@@ -104,28 +101,5 @@ public class CompanyFeedbackService {
         stats.setReasonCounts(counts);
         stats.setTotalExits((int) total);
         return stats;
-    }
-
-    // ---- Зарплатный калькулятор ----
-
-    public CompanyFeedbackDto.SalaryCalcResponse calculateSalary(CompanyFeedbackDto.SalaryCalcRequest request) {
-        SalaryStat stat = salaryStatRepository.findBest(
-                request.getCategoryId(),
-                request.getCity(),
-                request.getExperienceYears() != null ? request.getExperienceYears() : 0
-        ).orElseThrow(() -> new ResourceNotFoundException("Нет данных для расчёта зарплаты по данным параметрам"));
-
-        Category category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Категория не найдена"));
-
-        CompanyFeedbackDto.SalaryCalcResponse response = new CompanyFeedbackDto.SalaryCalcResponse();
-        response.setSalaryMin(stat.getSalaryMin());
-        response.setSalaryAvg(stat.getSalaryAvg());
-        response.setSalaryMax(stat.getSalaryMax());
-        response.setCategoryName(category.getName());
-        response.setCity(request.getCity());
-        response.setExperienceYears(request.getExperienceYears());
-        response.setCurrency("KGS");
-        return response;
     }
 }

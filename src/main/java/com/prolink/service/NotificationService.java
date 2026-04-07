@@ -47,6 +47,11 @@ public class NotificationService {
         notificationRepository.markAllAsRead(userId);
     }
 
+    @Transactional
+    public void markChatNotificationsAsRead(Long userId, Long roomId) {
+        notificationRepository.markChatNotificationsAsRead(userId, roomId);
+    }
+
     private NotificationDto toDto(Notification n) {
         NotificationDto dto = new NotificationDto();
         dto.setId(n.getId());

@@ -39,11 +39,4 @@ public class CompanyFeedbackController {
     public ResponseEntity<CompanyFeedbackDto.ExitReasonStats> getExitReasonStats(@PathVariable Long id) {
         return ResponseEntity.ok(companyFeedbackService.getExitReasonStats(id));
     }
-
-    // Зарплатный калькулятор
-    @PostMapping("/salary/calculate")
-    public ResponseEntity<CompanyFeedbackDto.SalaryCalcResponse> calculateSalary(
-            @RequestBody CompanyFeedbackDto.SalaryCalcRequest request) {
-        return ResponseEntity.ok(companyFeedbackService.calculateSalary(request));
-    }
 }

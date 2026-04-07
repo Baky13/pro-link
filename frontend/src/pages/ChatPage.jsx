@@ -72,13 +72,20 @@ export default function ChatPage() {
     if (!activeRoom) return
     setPage(0)
     setMessages([])
-    chatApi.getMessages(activeRoom, { size: 30, page: 0 }).then(r => {
-      const content = r.data.content?.reverse() || []
-      setMessages(content)
-      setHasMore(!r.data.last)
-    })
+    chatApi.getMessages(activeRoom, { size: 30, page: 0 })
+      .then(r => {
+        const content = r.data.content?.reverse() || []
+        setMessages(content)
+        setHasMore(!r.data.last)
+      })
+      .catch(error => {
+        console.error('Error loading messages:', error)
+        // Не перенаправляем на главную, просто показываем ошибку
+        toast.error('Ошибка загрузки сообщений')
+      })
     setUnreadMap(prev => ({ ...prev, [activeRoom]: 0 }))
-    notificationApi.markAllRead().catch(() => {})
+    // Помечаем как прочитанные только уведомления этого чата
+    notificationApi.markChatRead(activeRoom).catch(() => {})
   }, [activeRoom])
 
   useEffect(() => {
@@ -179,6 +186,7 @@ export default function ChatPage() {
   }
 
   const handleRoomSelect = id => {
+    console.log('Selecting room:', id)
     setActiveRoom(id)
     setMessages([])
     setUnreadMap(prev => ({ ...prev, [id]: 0 }))

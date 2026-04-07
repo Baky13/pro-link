@@ -14,7 +14,7 @@ public class SpaController {
         "/profile", "/applications",
         "/chat", "/chat/**",
         "/notifications", "/my-vacancies",
-        "/saved", "/map", "/dashboard"
+        "/saved", "/map", "/dashboard", "/salary"
     })
     public String forward(HttpServletRequest request) {
         return "forward:/index.html";

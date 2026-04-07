@@ -39,12 +39,9 @@ export const useThemeStore = create(
   )
 )
 
-export const useLangStore = create(
-  persist(
-    set => ({
-      lang: 'ru',
-      setLang: lang => set({ lang }),
-    }),
-    { name: 'lang' }
-  )
-)
+export const useNotifStore = create(set => ({
+  unreadCount: 0,
+  setUnreadCount: count => set({ unreadCount: count }),
+  decrement: () => set(s => ({ unreadCount: Math.max(0, s.unreadCount - 1) })),
+  reset: () => set({ unreadCount: 0 }),
+}))

@@ -36,24 +36,6 @@ public class CompanyFeedbackDto {
     }
 
     @Data
-    public static class SalaryCalcRequest {
-        private Long categoryId;
-        private String city;
-        private Integer experienceYears;
-    }
-
-    @Data
-    public static class SalaryCalcResponse {
-        private Integer salaryMin;
-        private Integer salaryAvg;
-        private Integer salaryMax;
-        private String categoryName;
-        private String city;
-        private Integer experienceYears;
-        private String currency;
-    }
-
-    @Data
     public static class StaleApplicationFeedback {
         private Long applicationId;
         private String vacancyTitle;

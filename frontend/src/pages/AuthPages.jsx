@@ -40,10 +40,6 @@ function AuthLayout({ children, title, subtitle }) {
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <div style={{ width: '100%', maxWidth: 440 }}>
           <div style={{ marginBottom: 32 }}>
-            <Link to="/" style={{ fontWeight: 900, fontSize: 22, letterSpacing: -0.5, display: 'inline-flex', alignItems: 'center', gap: 2, marginBottom: 24 }}>
-              <span style={{ background: 'linear-gradient(135deg, #5b5ef4, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Pro</span>
-              <span style={{ color: 'var(--text)' }}>Link</span>
-            </Link>
             <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 6 }}>{title}</h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>{subtitle}</p>
           </div>

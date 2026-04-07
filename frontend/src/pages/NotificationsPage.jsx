@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { notificationApi } from '../api'
-
+import { useNotifStore } from '../store'
 import { useT } from '../utils/i18n'
 import { Bell, CheckCheck } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -20,6 +20,7 @@ const TYPE_ICONS = {
 export default function NotificationsPage() {
     const t = useT()
   const navigate = useNavigate()
+  const { reset, decrement } = useNotifStore()
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -32,6 +33,7 @@ export default function NotificationsPage() {
   const markAllRead = async () => {
     await notificationApi.markAllRead()
     setNotifications(n => n.map(item => ({ ...item, isRead: true })))
+    reset()
     toast.success('Все прочитаны')
   }
 
@@ -40,13 +42,35 @@ export default function NotificationsPage() {
       setNotifications(prev => prev.map(item =>
         item.id === n.id ? { ...item, isRead: true } : item
       ))
-      try { await notificationApi.markAllRead() } catch {}
+      decrement()
+      // Помечаем как прочитанные только уведомления этого чата, если это сообщение
+      try {
+        if (n.type === 'NEW_MESSAGE' && n.referenceId) {
+          await notificationApi.markChatRead(n.referenceId)
+          // Обновляем все уведомления этого чата в локальном состоянии
+          setNotifications(prev => prev.map(item =>
+            item.type === 'NEW_MESSAGE' && item.referenceId === n.referenceId
+              ? { ...item, isRead: true }
+              : item
+          ))
+        }
+      } catch {}
     }
+    
+    // Навигация по типу уведомления
     if (!n.referenceId) return
-    if (n.type === 'NEW_MESSAGE') navigate(`/chat/${n.referenceId}`)
-    else if (n.type === 'APPLICATION_STATUS') navigate('/applications')
-    else if (n.type === 'VACANCY_REOPENED') navigate(`/vacancies/${n.referenceId}`)
-    else if (n.type === 'STALE_APPLICATION') navigate('/applications')
+    
+    console.log('Navigating from notification:', n.type, n.referenceId)
+    
+    if (n.type === 'NEW_MESSAGE') {
+      navigate(`/chat/${n.referenceId}`)
+    } else if (n.type === 'APPLICATION_STATUS') {
+      navigate('/applications')
+    } else if (n.type === 'VACANCY_REOPENED') {
+      navigate(`/vacancies/${n.referenceId}`)
+    } else if (n.type === 'STALE_APPLICATION') {
+      navigate('/applications')
+    }
   }
 
   const unreadCount = notifications.filter(n => !n.isRead).length

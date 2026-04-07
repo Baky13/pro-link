@@ -60,7 +60,8 @@ export default function ProfilePage() {
   const addSkill = () => {
     const trimmed = skillInput.trim()
     if (!trimmed) return
-    if ((form.skills || []).includes(trimmed)) { toast.error(t.skillExists); return }
+    const exists = (form.skills || []).some(s => s.toLowerCase() === trimmed.toLowerCase())
+    if (exists) { toast.error(t.skillExists); return }
     set('skills', [...(form.skills || []), trimmed])
     setSkillInput('')
   }
