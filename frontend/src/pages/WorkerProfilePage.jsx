@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Globe, MapPin, Briefcase, Calendar } from 'lucide-react'
-import { profileApi } from '../api'
-
+import { ArrowLeft, Globe, MapPin, Briefcase, Calendar, MessageCircle } from 'lucide-react'
+import { profileApi, chatApi } from '../api'
+import { useAuthStore } from '../store'
 import { useT } from '../utils/i18n'
+import toast from 'react-hot-toast'
 
 export default function WorkerProfilePage() {
   const { id } = useParams()
-    const t = useT()
+  const t = useT()
   const navigate = useNavigate()
+  const { user } = useAuthStore()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -17,6 +19,13 @@ export default function WorkerProfilePage() {
       .then(r => setProfile(r.data))
       .finally(() => setLoading(false))
   }, [id])
+
+  const handleChat = async () => {
+    try {
+      const { data } = await chatApi.getOrCreateDirectRoom(profile.user.id)
+      navigate(`/chat/${data.id}`)
+    } catch { toast.error('Ошибка') }
+  }
 
   if (loading) return <div style={{ textAlign: 'center', padding: 80, color: 'var(--text-secondary)' }}>{t.loading}</div>
   if (!profile) return null
@@ -54,11 +63,17 @@ export default function WorkerProfilePage() {
               )}
             </div>
             {profile.title && <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--primary)', marginBottom: 8 }}>{profile.title}</p>}
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 14, color: 'var(--text-secondary)' }}>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 14, color: 'var(--text-secondary)', marginBottom: 12 }}>
               {profile.user?.city && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={13} /> {profile.user.city}</span>}
               {profile.experienceYears > 0 && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Briefcase size={13} /> {profile.experienceYears} {t.years} опыта</span>}
               {profile.expectedSalary && <span style={{ fontWeight: 700, color: 'var(--primary)' }}>от {profile.expectedSalary.toLocaleString()} KGS</span>}
             </div>
+            {user?.role === 'EMPLOYER' && (
+              <button className="btn-primary" onClick={handleChat}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px' }}>
+                <MessageCircle size={16} /> Написать
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -65,6 +65,12 @@ public class ChatController {
         return chatService.getOrCreateRoom(applicationId, user.getId());
     }
 
+    @PostMapping("/rooms/direct/{targetUserId}")
+    public ChatDto.RoomResponse getOrCreateDirectRoom(@PathVariable Long targetUserId,
+                                                       @AuthenticationPrincipal User user) {
+        return chatService.getOrCreateDirectRoom(targetUserId, user.getId());
+    }
+
     @PostMapping("/rooms/{roomId}/messages")
     public ResponseEntity<ChatDto.MessageResponse> sendMessageRest(
             @PathVariable Long roomId,

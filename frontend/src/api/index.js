@@ -63,6 +63,7 @@ export const chatApi = {
   getRooms: () => api.get('/chat/rooms'),
   getArchivedRooms: () => api.get('/chat/rooms/archived'),
   getOrCreateRoom: applicationId => api.post(`/chat/rooms/application/${applicationId}`),
+  getOrCreateDirectRoom: targetUserId => api.post(`/chat/rooms/direct/${targetUserId}`),
   getMessages: (roomId, params) => api.get(`/chat/rooms/${roomId}/messages`, { params }),
   sendMessage: (roomId, content) => api.post(`/chat/rooms/${roomId}/messages`, { content }),
   archiveRoom: roomId => api.patch(`/chat/rooms/${roomId}/archive`),
