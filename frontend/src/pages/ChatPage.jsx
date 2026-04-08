@@ -36,6 +36,8 @@ export default function ChatPage() {
   const stompRef = useRef(null)
   const activeRoomRef = useRef(activeRoom)
 
+  const [mobileShowChat, setMobileShowChat] = useState(!!roomId)
+
   useEffect(() => { activeRoomRef.current = activeRoom }, [activeRoom])
 
   const loadRooms = (currentTab = tab) => {
@@ -80,9 +82,14 @@ export default function ChatPage() {
         setHasMore(!r.data.last)
       })
       .catch(error => {
-        console.error('Error loading messages:', error)
-        // Не перенаправляем на главную, просто показываем ошибку
-        toast.error('Ошибка загрузки сообщений')
+        if (error.response?.status === 404) {
+          // Чат удален собеседником
+          setActiveRoom(null)
+          loadRooms()
+          toast.error('Диалог был удалён')
+        } else {
+          toast.error('Ошибка загрузки сообщений')
+        }
       })
     setUnreadMap(prev => ({ ...prev, [activeRoom]: 0 }))
     notificationApi.markChatRead(activeRoom).catch(() => {})
@@ -193,6 +200,7 @@ export default function ChatPage() {
     setMessages([])
     setUnreadMap(prev => ({ ...prev, [id]: 0 }))
     setMenuOpen(null)
+    setMobileShowChat(true)
     navigate(`/chat/${id}`)
   }
 
@@ -241,10 +249,16 @@ export default function ChatPage() {
         <MessageCircle size={22} color="var(--primary)" /> Чаты
       </h1>
 
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '280px 1fr', gap: 16, minHeight: 0 }}>
+      <div style={{ 
+        flex: 1, 
+        display: 'grid', 
+        gridTemplateColumns: window.innerWidth <= 640 ? '1fr' : '280px 1fr', 
+        gap: 16, 
+        minHeight: 0 
+      }}>
 
         {/* Список комнат */}
-        <div className="card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div className="card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', ...(window.innerWidth <= 640 && mobileShowChat ? { display: 'none' } : {}) }}>
           <div style={{ padding: '12px 12px 8px', borderBottom: '1px solid var(--border)' }}>
             {/* Tabs */}
             <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
@@ -364,6 +378,12 @@ export default function ChatPage() {
             <>
               {activeRoomData && (
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <button
+                    className="show-mobile"
+                    onClick={() => setMobileShowChat(false)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 4, marginRight: 4 }}>
+                    ← Назад
+                  </button>
                   <div style={{ position: 'relative' }}>
                     <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'white', fontSize: 15 }}>
                       {getOtherUser(activeRoomData)?.firstName?.[0]?.toUpperCase()}
