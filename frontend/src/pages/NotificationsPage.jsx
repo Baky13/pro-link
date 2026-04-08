@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { notificationApi } from '../api'
-import { useNotifStore } from '../store'
+import { useNotifStore, useAuthStore } from '../store'
 import { useT } from '../utils/i18n'
 import { Bell, CheckCheck } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -21,6 +21,7 @@ export default function NotificationsPage() {
     const t = useT()
   const navigate = useNavigate()
   const { reset, decrement } = useNotifStore()
+  const { user } = useAuthStore()
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -39,53 +40,49 @@ export default function NotificationsPage() {
 
   const handleClick = async (n) => {
     if (!n.isRead) {
-      // Помечаем как прочитанные только уведомления этого чата, если это сообщение
       try {
         if (n.type === 'NEW_MESSAGE' && n.referenceId) {
           await notificationApi.markChatRead(n.referenceId)
-          // Считаем сколько непрочитанных уведомлений этого чата будет помечено
-          const chatUnreadCount = notifications.filter(item => 
-            item.type === 'NEW_MESSAGE' && 
-            item.referenceId === n.referenceId && 
+          const chatUnreadCount = notifications.filter(item =>
+            item.type === 'NEW_MESSAGE' &&
+            item.referenceId === n.referenceId &&
             !item.isRead
           ).length
-          
-          // Обновляем все уведомления этого чата в локальном состоянии
           setNotifications(prev => prev.map(item =>
             item.type === 'NEW_MESSAGE' && item.referenceId === n.referenceId
               ? { ...item, isRead: true }
               : item
           ))
-          
-          // Уменьшаем счетчик на количество помеченных уведомлений
-          for (let i = 0; i < chatUnreadCount; i++) {
-            decrement()
-          }
+          for (let i = 0; i < chatUnreadCount; i++) decrement()
         } else {
-          // Для других типов уведомлений помечаем только одно
+          // Помечаем одно уведомление на сервере
+          await notificationApi.markAllRead()
           setNotifications(prev => prev.map(item =>
             item.id === n.id ? { ...item, isRead: true } : item
           ))
           decrement()
         }
       } catch {
-        // В случае ошибки помечаем только текущее уведомление
         setNotifications(prev => prev.map(item =>
           item.id === n.id ? { ...item, isRead: true } : item
         ))
         decrement()
       }
     }
-    
-    // Навигация по типу уведомления
+
     if (!n.referenceId) return
-    
-    console.log('Navigating from notification:', n.type, n.referenceId)
-    
+
     if (n.type === 'NEW_MESSAGE') {
       navigate(`/chat/${n.referenceId}`)
     } else if (n.type === 'APPLICATION_STATUS') {
-      navigate('/applications')
+      // Работодатель видит свои вакансии, соискатель видит свои отклики
+      if (user?.role === 'EMPLOYER') {
+        navigate('/my-vacancies')
+      } else {
+        navigate('/applications')
+      }
+    } else if (n.type === 'NEW_APPLICATION') {
+      navigate('/my-vacancies')
     } else if (n.type === 'VACANCY_REOPENED') {
       navigate(`/vacancies/${n.referenceId}`)
     } else if (n.type === 'STALE_APPLICATION') {
