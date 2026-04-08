@@ -53,7 +53,6 @@ export default function Navbar() {
 
   const navLinks = [
     { to: '/vacancies', label: t.findJob },
-    { to: '/map', label: '🗺️ Карта' },
     ...(user?.role === 'EMPLOYER' ? [
       { to: '/dashboard', label: '📊 Дашборд' },
       { to: '/workers', label: '👥 Сотрудники' },

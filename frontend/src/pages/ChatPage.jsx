@@ -5,13 +5,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import { chatApi, notificationApi } from '../api'
-import { useAuthStore } from '../store'
+import { useAuthStore, useNotifStore } from '../store'
 import { useT } from '../utils/i18n'
 import toast from 'react-hot-toast'
 
 export default function ChatPage() {
   const { roomId } = useParams()
   const { user } = useAuthStore()
+  const { setUnreadCount } = useNotifStore()
   const t = useT()
   const navigate = useNavigate()
 
@@ -84,13 +85,8 @@ export default function ChatPage() {
         toast.error('Ошибка загрузки сообщений')
       })
     setUnreadMap(prev => ({ ...prev, [activeRoom]: 0 }))
-    // Помечаем как прочитанные только уведомления этого чата
     notificationApi.markChatRead(activeRoom).catch(() => {})
-    // Обновляем глобальный счетчик уведомлений
-    notificationApi.getUnreadCount().then(r => {
-      const { setUnreadCount } = require('../store').useNotifStore.getState()
-      setUnreadCount(r.data.count || 0)
-    }).catch(() => {})
+    notificationApi.getUnreadCount().then(r => setUnreadCount(r.data.count || 0)).catch(() => {})
   }, [activeRoom])
 
   useEffect(() => {
@@ -122,14 +118,15 @@ export default function ChatPage() {
               if (message.senderId !== user.id) {
                 setMessages(prev => [...prev, message])
                 setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+                // Помечаем сообщения прочитанными раз уже в этом чате
+                notificationApi.markChatRead(currentRoom).catch(() => {})
               }
             } else {
-              // Toast уведомление если сообщение в другой комнате
+              // Toast только если сообщение в ДРУГОЙ комнате
               if (message.senderId !== user.id) {
                 toast(`💬 ${message.senderName}: ${message.content.slice(0, 40)}${message.content.length > 40 ? '...' : ''}`, {
                   duration: 4000,
                   style: { cursor: 'pointer' },
-                  onClick: () => handleRoomSelect(message.roomId),
                 })
                 setUnreadMap(prev => ({ ...prev, [message.roomId]: (prev[message.roomId] || 0) + 1 }))
               }
