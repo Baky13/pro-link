@@ -245,20 +245,22 @@ export default function ChatPage() {
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px', height: 'calc(100vh - 88px)', display: 'flex', flexDirection: 'column' }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .chat-grid { grid-template-columns: 1fr !important; }
+          .chat-rooms-hide { display: none !important; }
+          .chat-messages-hide { display: none !important; }
+        }
+      `}</style>
+
       <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
         <MessageCircle size={22} color="var(--primary)" /> Чаты
       </h1>
 
-      <div style={{ 
-        flex: 1, 
-        display: 'grid', 
-        gridTemplateColumns: window.innerWidth <= 640 ? '1fr' : '280px 1fr', 
-        gap: 16, 
-        minHeight: 0 
-      }}>
+      <div className="chat-grid" style={{ flex: 1, display: 'grid', gridTemplateColumns: '280px 1fr', gap: 16, minHeight: 0 }}>
 
         {/* Список комнат */}
-        <div className="card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', ...(window.innerWidth <= 640 && mobileShowChat ? { display: 'none' } : {}) }}>
+        <div className={`card ${mobileShowChat ? 'chat-rooms-hide' : ''}`} style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '12px 12px 8px', borderBottom: '1px solid var(--border)' }}>
             {/* Tabs */}
             <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
@@ -368,7 +370,7 @@ export default function ChatPage() {
         </div>
 
         {/* Область сообщений */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div className={`card ${!mobileShowChat ? 'chat-messages-hide' : ''}`} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {!activeRoom ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, color: 'var(--text-secondary)' }}>
               <MessageCircle size={48} strokeWidth={1} />
