@@ -83,7 +83,11 @@ export default function ChatPage() {
         const content = r.data.content || []
         setMessages(content)
         setHasMore(!r.data.last)
-        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'auto' }), 100)
+        setTimeout(() => {
+          if (messagesRef.current) {
+            messagesRef.current.scrollTop = messagesRef.current.scrollHeight
+          }
+        }, 100)
       })
       .catch(error => {
         if (error.response?.status === 404) {
@@ -102,7 +106,11 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (messages.length > 0 && page === 0) {
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'auto' }), 150)
+      setTimeout(() => {
+        if (messagesRef.current) {
+          messagesRef.current.scrollTop = messagesRef.current.scrollHeight
+        }
+      }, 150)
     }
   }, [messages.length, page])
 
@@ -128,7 +136,11 @@ export default function ChatPage() {
               // Только чужие сообщения — своё уже добавлено локально
               if (message.senderId !== user.id) {
                 setMessages(prev => [...prev, message])
-                setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+                setTimeout(() => {
+                  if (messagesRef.current) {
+                    messagesRef.current.scrollTop = messagesRef.current.scrollHeight
+                  }
+                }, 50)
                 notificationApi.markChatRead(currentRoom).catch(() => {})
               }
             } else {
@@ -192,9 +204,12 @@ export default function ChatPage() {
     setInput('')
     try {
       const { data } = await chatApi.sendMessage(activeRoom, content)
-      // Добавляем своё сообщение локально сразу
       setMessages(prev => [...prev, data])
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+      setTimeout(() => {
+        if (messagesRef.current) {
+          messagesRef.current.scrollTop = messagesRef.current.scrollHeight
+        }
+      }, 50)
     } catch {
       toast.error('Не удалось отправить')
       setInput(content)
