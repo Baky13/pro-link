@@ -80,10 +80,9 @@ export default function ChatPage() {
     setMessages([])
     chatApi.getMessages(activeRoom, { size: 30, page: 0 })
       .then(r => {
-        const content = r.data.content?.reverse() || []
+        const content = r.data.content || []
         setMessages(content)
         setHasMore(!r.data.last)
-        // Скроллим вниз после загрузки
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'auto' }), 100)
       })
       .catch(error => {
@@ -175,7 +174,7 @@ export default function ChatPage() {
     const prevScrollHeight = scrollEl?.scrollHeight || 0
     try {
       const r = await chatApi.getMessages(activeRoom, { size: 30, page: nextPage })
-      const older = r.data.content?.reverse() || []
+      const older = r.data.content || []
       setMessages(prev => [...older, ...prev])
       setHasMore(!r.data.last)
       setPage(nextPage)
