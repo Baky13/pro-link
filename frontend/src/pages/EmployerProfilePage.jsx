@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
-import { AlertTriangle, ExternalLink } from 'lucide-react'
-import { profileApi, reviewApi } from '../api'
+import { useParams, useNavigate } from 'react-router-dom'
+import { AlertTriangle, ExternalLink, MessageCircle } from 'lucide-react'
+import { profileApi, reviewApi, chatApi } from '../api'
 import { useAuthStore } from '../store'
 import { useT } from '../utils/i18n'
 import toast from 'react-hot-toast'
@@ -10,6 +10,7 @@ export default function EmployerProfilePage() {
   const { id } = useParams()
   const t = useT()
   const { user } = useAuthStore()
+  const navigate = useNavigate()
   const [employer, setEmployer] = useState(null)
   const [reviews, setReviews] = useState([])
   const [tab, setTab] = useState('about')
@@ -25,6 +26,13 @@ export default function EmployerProfilePage() {
       if (rev.status === 'fulfilled') setReviews(rev.value.data.content || [])
     }).finally(() => setLoading(false))
   }, [id])
+
+  const handleChat = async () => {
+    try {
+      const { data } = await chatApi.getOrCreateDirectRoom(employer.user?.id)
+      navigate(`/chat/${data.id}`)
+    } catch { toast.error('Ошибка открытия чата') }
+  }
 
   const handleReview = async e => {
     e.preventDefault()
@@ -72,7 +80,7 @@ export default function EmployerProfilePage() {
                 </a>
               )}
             </div>
-            <div style={{ display: 'flex', gap: 20, marginTop: 12, fontSize: 14 }}>
+            <div style={{ display: 'flex', gap: 20, marginTop: 12, fontSize: 14, alignItems: 'center', flexWrap: 'wrap' }}>
               {employer.rating > 0 && (
                 <span>⭐ <strong>{Number(employer.rating).toFixed(1)}</strong> ({employer.reviewsCount} {t.reviews})</span>
               )}
@@ -81,6 +89,12 @@ export default function EmployerProfilePage() {
                   <AlertTriangle size={14} style={{ display: 'inline', marginRight: 4 }} />
                   {employer.complaintsCount} {t.complaints}
                 </span>
+              )}
+              {user?.role === 'WORKER' && (
+                <button className="btn-primary" onClick={handleChat}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 18px', fontSize: 14 }}>
+                  <MessageCircle size={15} /> Написать
+                </button>
               )}
             </div>
           </div>
