@@ -83,6 +83,8 @@ export default function ChatPage() {
         const content = r.data.content?.reverse() || []
         setMessages(content)
         setHasMore(!r.data.last)
+        // Скроллим вниз после загрузки
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'auto' }), 100)
       })
       .catch(error => {
         if (error.response?.status === 404) {
@@ -101,9 +103,9 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (messages.length > 0 && page === 0) {
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'auto' }), 100)
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'auto' }), 150)
     }
-  }, [messages])
+  }, [messages.length, page])
 
   // WebSocket
   useEffect(() => {
@@ -253,20 +255,32 @@ export default function ChatPage() {
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px', height: 'calc(100vh - 88px)', display: 'flex', flexDirection: 'column' }}>
       <style>{`
         @media (max-width: 640px) {
-          .chat-grid { grid-template-columns: 1fr !important; }
-          .chat-rooms-hide { display: none !important; }
-          .chat-messages-hide { display: none !important; }
+          .chat-page { padding: 0 !important; height: 100vh !important; }
+          .chat-title { display: none !important; }
+          .chat-grid { grid-template-columns: 1fr !important; gap: 0 !important; }
+          .chat-rooms-panel { border-radius: 0 !important; border: none !important; }
+          .chat-messages-panel { 
+            position: fixed !important; 
+            top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+            z-index: 200 !important;
+            border-radius: 0 !important;
+            border: none !important;
+          }
+          .chat-messages-panel[style*="display: none"] { display: none !important; }
+        }
+        @media (min-width: 641px) {
+          .chat-messages-panel { display: flex !important; }
         }
       `}</style>
 
-      <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <h1 className="chat-title" style={{ fontSize: 22, fontWeight: 800, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
         <MessageCircle size={22} color="var(--primary)" /> Чаты
       </h1>
 
       <div className="chat-grid" style={{ flex: 1, display: 'grid', gridTemplateColumns: '280px 1fr', gap: 16, minHeight: 0 }}>
 
         {/* Список комнат */}
-        <div className={`card ${mobileShowChat ? 'chat-rooms-hide' : ''}`} style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div className="card chat-rooms-panel" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '12px 12px 8px', borderBottom: '1px solid var(--border)' }}>
             {/* Tabs */}
             <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
@@ -376,7 +390,7 @@ export default function ChatPage() {
         </div>
 
         {/* Область сообщений */}
-        <div className={`card ${!mobileShowChat ? 'chat-messages-hide' : ''}`} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div className="card chat-messages-panel" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', ...(mobileShowChat ? {} : { display: 'none' }) }}>
           {!activeRoom ? (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, color: 'var(--text-secondary)' }}>
               <MessageCircle size={48} strokeWidth={1} />
@@ -409,7 +423,7 @@ export default function ChatPage() {
                 </div>
               )}
 
-              <div ref={messagesRef} style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div ref={messagesRef} style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'flex-start' }}>
                 {hasMore && (
                   <div style={{ textAlign: 'center', marginBottom: 8 }}>
                     <button className="btn-ghost" style={{ fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}
