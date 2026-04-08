@@ -38,6 +38,9 @@ export default function ChatPage() {
 
   const [mobileShowChat, setMobileShowChat] = useState(!!roomId)
 
+  const roomsRef = useRef(rooms)
+  useEffect(() => { roomsRef.current = rooms }, [rooms])
+
   useEffect(() => { activeRoomRef.current = activeRoom }, [activeRoom])
 
   const loadRooms = (currentTab = tab) => {
@@ -98,9 +101,9 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (messages.length > 0 && page === 0) {
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'auto' }), 100)
     }
-  }, [messages.length])
+  }, [messages])
 
   // WebSocket
   useEffect(() => {
@@ -125,15 +128,18 @@ export default function ChatPage() {
               if (message.senderId !== user.id) {
                 setMessages(prev => [...prev, message])
                 setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
-                // Помечаем сообщения прочитанными раз уже в этом чате
                 notificationApi.markChatRead(currentRoom).catch(() => {})
               }
             } else {
               // Toast только если сообщение в ДРУГОЙ комнате
               if (message.senderId !== user.id) {
+                // Если комната незнакомая — перезагружаем список
+                const knownIds = roomsRef.current.map(r => r.id)
+                if (!knownIds.includes(message.roomId)) {
+                  loadRooms()
+                }
                 toast(`💬 ${message.senderName}: ${message.content.slice(0, 40)}${message.content.length > 40 ? '...' : ''}`, {
                   duration: 4000,
-                  style: { cursor: 'pointer' },
                 })
                 setUnreadMap(prev => ({ ...prev, [message.roomId]: (prev[message.roomId] || 0) + 1 }))
               }
