@@ -28,31 +28,6 @@ public class ChatService {
     private final NotificationService notificationService;
 
     @Transactional
-    public ChatDto.RoomResponse getOrCreateDirectRoom(Long targetUserId, Long currentUserId) {
-        User currentUser = userRepository.findById(currentUserId).orElseThrow();
-        User targetUser = userRepository.findById(targetUserId).orElseThrow();
-
-        Long workerId, employerId;
-        if (currentUser.getRole().name().equals("EMPLOYER")) {
-            employerId = currentUserId;
-            workerId = targetUserId;
-        } else {
-            workerId = currentUserId;
-            employerId = targetUserId;
-        }
-
-        return chatRoomRepository.findByWorkerIdAndEmployerId(workerId, employerId)
-                .map(this::toRoomResponse)
-                .orElseGet(() -> {
-                    ChatRoom room = ChatRoom.builder()
-                            .worker(workerId.equals(currentUserId) ? currentUser : targetUser)
-                            .employer(employerId.equals(currentUserId) ? currentUser : targetUser)
-                            .build();
-                    return toRoomResponse(chatRoomRepository.save(room));
-                });
-    }
-
-    @Transactional
     public ChatDto.RoomResponse getOrCreateRoom(Long applicationId, Long userId) {
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
@@ -60,6 +35,7 @@ public class ChatService {
         Long workerId = application.getWorker().getUser().getId();
         Long employerId = application.getVacancy().getEmployer().getUser().getId();
 
+        // Ищем существующую комнату между этими двумя пользователями
         return chatRoomRepository.findByWorkerIdAndEmployerId(workerId, employerId)
                 .map(this::toRoomResponse)
                 .orElseGet(() -> {

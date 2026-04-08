@@ -1,24 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, MapPin, Briefcase, SlidersHorizontal, X, MessageCircle } from 'lucide-react'
+import { Search, MapPin, Briefcase, SlidersHorizontal, X } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { profileApi, chatApi } from '../api'
-import { useAuthStore } from '../store'
+import { profileApi } from '../api'
 import { useT } from '../utils/i18n'
-import toast from 'react-hot-toast'
 
 function WorkerCard({ worker }) {
   const navigate = useNavigate()
-  const { user } = useAuthStore()
   const t = useT()
-
-  const handleChat = async (e) => {
-    e.stopPropagation()
-    try {
-      const { data } = await chatApi.getOrCreateDirectRoom(worker.user.id)
-      navigate(`/chat/${data.id}`)
-    } catch { toast.error('Ошибка') }
-  }
 
   const statusColors = {
     ACTIVELY_LOOKING: { bg: '#d1fae5', color: '#065f46', label: '🟢 Активно ищет' },
@@ -88,7 +77,7 @@ function WorkerCard({ worker }) {
           )}
 
           {worker.skills?.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {worker.skills.slice(0, 5).map(s => (
                 <span key={s} className="badge badge-primary" style={{ fontSize: 11 }}>{s}</span>
               ))}
@@ -98,12 +87,6 @@ function WorkerCard({ worker }) {
                 </span>
               )}
             </div>
-          )}
-          {user?.role === 'EMPLOYER' && (
-            <button className="btn-outline" onClick={handleChat}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, padding: '6px 14px' }}>
-              <MessageCircle size={14} /> Написать
-            </button>
           )}
         </div>
       </div>
