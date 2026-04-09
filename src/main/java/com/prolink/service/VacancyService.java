@@ -70,7 +70,6 @@ public class VacancyService {
                 .responseDeadlineDays(request.getResponseDeadlineDays() != null ? request.getResponseDeadlineDays() : 7)
                 .autoRejectEnabled(request.getAutoRejectEnabled() != null && request.getAutoRejectEnabled())
                 .autoRejectMinExp(request.getAutoRejectMinExp())
-                .autoRejectMinSalary(request.getAutoRejectMinSalary())
                 .expiresAt(request.getExpiresAt())
                 .build();
 
@@ -102,6 +101,9 @@ public class VacancyService {
         vacancy.setAddress(request.getAddress());
         if (request.getEmploymentType() != null) vacancy.setEmploymentType(request.getEmploymentType());
         if (request.getIsHot() != null) vacancy.setIsHot(request.getIsHot());
+        if (request.getIsUrgent() != null) vacancy.setIsUrgent(request.getIsUrgent());
+        vacancy.setAutoRejectEnabled(request.getAutoRejectEnabled() != null && request.getAutoRejectEnabled());
+        vacancy.setAutoRejectMinExp(request.getAutoRejectMinExp());
         return toResponse(vacancyRepository.save(vacancy));
     }
 
@@ -192,6 +194,7 @@ public class VacancyService {
         r.setViewsCount(v.getViewsCount());
         r.setApplicantsCount(v.getApplicantsCount());
         r.setResponseDeadlineDays(v.getResponseDeadlineDays());
+        r.setAutoRejectMinExp(v.getAutoRejectMinExp());
         r.setCreatedAt(v.getCreatedAt());
         r.setExpiresAt(v.getExpiresAt());
 

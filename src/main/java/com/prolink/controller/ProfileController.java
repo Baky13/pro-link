@@ -56,6 +56,14 @@ public class ProfileController {
         return profileService.getEmployerById(id);
     }
 
+    @GetMapping("/employers")
+    public Page<EmployerDto.Response> searchEmployers(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String industry,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return profileService.searchEmployers(search, industry, pageable);
+    }
+
     @PutMapping("/employer/profile")
     public EmployerDto.Response updateEmployerProfile(@AuthenticationPrincipal User user,
                                                        @RequestBody EmployerDto.Request request) {

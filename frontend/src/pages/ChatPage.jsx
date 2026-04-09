@@ -7,6 +7,7 @@ import SockJS from 'sockjs-client'
 import { chatApi, notificationApi } from '../api'
 import { useAuthStore, useNotifStore } from '../store'
 import { useT } from '../utils/i18n'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
 import toast from 'react-hot-toast'
 
 export default function ChatPage() {
@@ -31,6 +32,7 @@ export default function ChatPage() {
   const [unreadMap, setUnreadMap] = useState({})
   const [tab, setTab] = useState('active') // 'active' | 'archived'
   const [menuOpen, setMenuOpen] = useState(null)
+  const [confirmDeleteRoom, setConfirmDeleteRoom] = useState(null)
   const bottomRef = useRef(null)
   const messagesRef = useRef(null)
   const stompRef = useRef(null)
@@ -217,13 +219,21 @@ export default function ChatPage() {
   }
 
   const handleRoomSelect = id => {
-    console.log('Selecting room:', id)
-    setActiveRoom(id)
     setMessages([])
     setUnreadMap(prev => ({ ...prev, [id]: 0 }))
     setMenuOpen(null)
     setMobileShowChat(true)
     navigate(`/chat/${id}`)
+    if (id === activeRoom) {
+      // Если нажали на тот же чат — загружаем сообщения вручную
+      chatApi.getMessages(id, { size: 30, page: 0 }).then(r => {
+        setMessages(r.data.content || [])
+        setHasMore(!r.data.last)
+        setTimeout(() => { if (messagesRef.current) messagesRef.current.scrollTop = messagesRef.current.scrollHeight }, 100)
+      }).catch(() => {})
+    } else {
+      setActiveRoom(id)
+    }
   }
 
   const handleArchive = async (roomId) => {
@@ -246,14 +256,18 @@ export default function ChatPage() {
   }
 
   const handleDelete = async (roomId) => {
-    if (!window.confirm('Удалить диалог? Все сообщения будут удалены.')) return
+    setConfirmDeleteRoom(roomId)
+    setMenuOpen(null)
+  }
+
+  const confirmDelete = async () => {
     try {
-      await chatApi.deleteRoom(roomId)
-      if (activeRoom === roomId) setActiveRoom(null)
+      await chatApi.deleteRoom(confirmDeleteRoom)
+      if (activeRoom === confirmDeleteRoom) setActiveRoom(null)
       loadRooms(tab)
       toast.success('Диалог удалён')
     } catch { toast.error('Ошибка') }
-    setMenuOpen(null)
+    setConfirmDeleteRoom(null)
   }
 
   const getOtherUser = room => {
@@ -267,6 +281,16 @@ export default function ChatPage() {
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px', height: 'calc(100vh - 88px)', display: 'flex', flexDirection: 'column' }}>
+      <ConfirmDialog
+        isOpen={!!confirmDeleteRoom}
+        onClose={() => setConfirmDeleteRoom(null)}
+        onConfirm={confirmDelete}
+        title="Удалить диалог?"
+        message="Все сообщения будут удалены. Это действие нельзя отменить."
+        confirmText="Удалить"
+        cancelText="Отмена"
+        type="danger"
+      />
       <style>{`
         @media (max-width: 640px) {
           .chat-page { padding: 0 !important; height: 100vh !important; }
@@ -332,9 +356,13 @@ export default function ChatPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     {/* Avatar with online dot */}
                     <div style={{ position: 'relative', flexShrink: 0 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: isActive ? 'var(--primary)' : 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, color: isActive ? 'white' : 'var(--text-secondary)' }}>
-                        {other?.firstName?.[0]?.toUpperCase() || '?'}
-                      </div>
+                      {other?.avatarUrl ? (
+                        <img src={other.avatarUrl} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: isActive ? 'var(--primary)' : 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, color: isActive ? 'white' : 'var(--text-secondary)' }}>
+                          {other?.firstName?.[0]?.toUpperCase() || '?'}
+                        </div>
+                      )}
                       {isOnline && (
                         <div style={{ position: 'absolute', bottom: 1, right: 1, width: 10, height: 10, borderRadius: '50%', background: '#10b981', border: '2px solid var(--bg-card)' }} />
                       )}
@@ -421,9 +449,13 @@ export default function ChatPage() {
                     ← Назад
                   </button>
                   <div style={{ position: 'relative' }}>
-                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'white', fontSize: 15 }}>
-                      {getOtherUser(activeRoomData)?.firstName?.[0]?.toUpperCase()}
-                    </div>
+                    {getOtherUser(activeRoomData)?.avatarUrl ? (
+                      <img src={getOtherUser(activeRoomData).avatarUrl} alt="" style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'white', fontSize: 15 }}>
+                        {getOtherUser(activeRoomData)?.firstName?.[0]?.toUpperCase()}
+                      </div>
+                    )}
                     {onlineUsers.has(getOtherUser(activeRoomData)?.id) && (
                       <div style={{ position: 'absolute', bottom: 1, right: 1, width: 10, height: 10, borderRadius: '50%', background: '#10b981', border: '2px solid var(--bg-card)' }} />
                     )}

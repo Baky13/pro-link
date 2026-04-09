@@ -11,6 +11,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.Period;
+
 @Service
 @RequiredArgsConstructor
 public class ApplicationService {
@@ -43,11 +46,12 @@ public class ApplicationService {
                         .status(Application.Status.REJECTED)
                         .build();
                 applicationRepository.save(rejected);
+
                 notificationService.notify(
                         worker.getUser(),
                         Notification.Type.APPLICATION_STATUS,
-                        "Заявка автоматически отклонена",
-                        "Ваша заявка на \"" + vacancy.getTitle() + "\" отклонена автоматически.\n" + rejectReason,
+                        "Отклик не прошёл проверку",
+                        rejectReason,
                         rejected.getId()
                 );
                 return toResponse(rejected);
@@ -71,6 +75,35 @@ public class ApplicationService {
         );
 
         return toResponse(application);
+    }
+
+    private String checkAutoReject(Vacancy vacancy, WorkerProfile worker) {
+        // Проверка опыта
+        if (vacancy.getAutoRejectMinExp() != null &&
+                worker.getExperienceYears() < vacancy.getAutoRejectMinExp()) {
+            return "Данный работодатель установил ограничение по опыту работы: минимум " +
+                    vacancy.getAutoRejectMinExp() + " лет. У вас указано " +
+                    worker.getExperienceYears() + " лет опыта.";
+        }
+
+        // Проверка возраста
+        if (vacancy.getAutoRejectMinAge() != null && worker.getBirthDate() != null) {
+            int age = Period.between(worker.getBirthDate(), LocalDate.now()).getYears();
+            if (age < vacancy.getAutoRejectMinAge()) {
+                return "Данный работодатель установил ограничение по возрасту: от " +
+                        vacancy.getAutoRejectMinAge() + " лет. Ваш возраст: " + age + " лет.";
+            }
+        }
+
+        // Кастомный критерий — просто информируем
+        if (vacancy.getAutoRejectCustomCriteria() != null &&
+                !vacancy.getAutoRejectCustomCriteria().isBlank()) {
+            return "Данный работодатель установил дополнительное требование: " +
+                    vacancy.getAutoRejectCustomCriteria() +
+                    ". Ваша заявка была отклонена автоматически.";
+        }
+
+        return null;
     }
 
     public Page<ApplicationDto.Response> getMyApplications(Long userId, Pageable pageable) {
@@ -134,19 +167,6 @@ public class ApplicationService {
             throw new BadRequestException("Нельзя отменить принятый отклик");
         }
         applicationRepository.delete(application);
-    }
-
-    private String checkAutoReject(Vacancy vacancy, WorkerProfile worker) {
-        if (vacancy.getAutoRejectMinExp() != null
-                && worker.getExperienceYears() < vacancy.getAutoRejectMinExp()) {
-            return "Причина: требуется опыт от " + vacancy.getAutoRejectMinExp() +
-                   " лет, у вас указано " + worker.getExperienceYears() + " лет.";
-        }
-        if (vacancy.getAutoRejectMinSalary() != null && worker.getExpectedSalary() != null
-                && worker.getExpectedSalary() > vacancy.getAutoRejectMinSalary()) {
-            return "Причина: ваша ожидаемая зарплата превышает максимум вакансии.";
-        }
-        return null;
     }
 
     private ApplicationDto.Response toResponse(Application a) {

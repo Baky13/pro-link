@@ -141,20 +141,15 @@ export default function ProfilePage() {
                   <input className="input" type="number" value={form.expectedSalary || ''} onChange={e => set('expectedSalary', e.target.value)} placeholder="80000" />
                 </div>
                 <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>{t.experienceYears}</label>
-                  <input className="input" type="number" min={0} max={50}
-                    value={form.experienceYears === 0 ? '' : form.experienceYears}
-                    onChange={e => set('experienceYears', e.target.value === '' ? 0 : Number(e.target.value))}
-                    onBlur={e => { if (e.target.value === '') set('experienceYears', 0) }}
-                    placeholder="0" />
-                </div>
-                <div>
                   <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>{t.jobSearchStatus}</label>
                   <select className="input" value={form.jobSearchStatus || 'OPEN_TO_OFFERS'} onChange={e => set('jobSearchStatus', e.target.value)}>
                     <option value="ACTIVELY_LOOKING">{t.ACTIVELY_LOOKING}</option>
                     <option value="OPEN_TO_OFFERS">{t.OPEN_TO_OFFERS}</option>
                     <option value="NOT_LOOKING">{t.NOT_LOOKING}</option>
                   </select>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', padding: '10px 14px', borderRadius: 8, background: 'var(--primary-light)', border: '1px solid var(--primary)', fontSize: 13, color: 'var(--primary)', fontWeight: 600 }}>
+                  💼 Опыт: {profile.experienceYears || 0} лет (считается автоматически)
                 </div>
               </div>
               <div style={{ marginTop: 16 }}>

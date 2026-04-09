@@ -30,7 +30,6 @@ public class VacancyDto {
         private Integer responseDeadlineDays;
         private Boolean autoRejectEnabled;
         private Integer autoRejectMinExp;
-        private Integer autoRejectMinSalary;
         private List<String> skills;
         private LocalDateTime expiresAt;
     }
@@ -55,6 +54,7 @@ public class VacancyDto {
         private Integer viewsCount;
         private Integer applicantsCount;
         private Integer responseDeadlineDays;
+        private Integer autoRejectMinExp;
         private List<String> skills;
         private CategoryDto category;
         private EmployerDto.Summary employer;

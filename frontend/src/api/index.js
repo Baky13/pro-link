@@ -42,6 +42,7 @@ export const profileApi = {
   getEmployer: () => api.get('/employer/profile'),
   updateEmployer: data => api.put('/employer/profile', data),
   getEmployerById: id => api.get(`/employers/${id}`),
+  searchEmployers: params => api.get('/employers', { params }),
   uploadFile: (type, file) => {
     const form = new FormData()
     form.append('file', file)

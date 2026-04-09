@@ -26,7 +26,7 @@ export default function CreateVacancyPage() {
     employmentType: 'FULL_TIME',
     isHot: false, isUrgent: false,
     responseDeadlineDays: 7,
-    autoRejectEnabled: false, autoRejectMinExp: '', autoRejectMinSalary: '',
+    autoRejectEnabled: false, autoRejectMinExp: '', autoRejectMinAge: '', autoRejectCustomCriteria: '',
     skills: [],
   })
 
@@ -86,7 +86,8 @@ export default function CreateVacancyPage() {
         salaryTo: form.salaryTo ? Number(form.salaryTo) : null,
         responseDeadlineDays: Number(form.responseDeadlineDays),
         autoRejectMinExp: form.autoRejectMinExp ? Number(form.autoRejectMinExp) : null,
-        autoRejectMinSalary: form.autoRejectMinSalary ? Number(form.autoRejectMinSalary) : null,
+        autoRejectMinAge: form.autoRejectMinAge ? Number(form.autoRejectMinAge) : null,
+        autoRejectCustomCriteria: form.autoRejectCustomCriteria || null,
       }
       const { data } = await vacancyApi.create(payload)
       toast.success(t.vacancyCreated)
@@ -271,15 +272,9 @@ export default function CreateVacancyPage() {
               {t.autoReject}
             </label>
             {form.autoRejectEnabled && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginLeft: 24 }}>
-                <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>{t.minExperience}</label>
-                  <input className="input" type="number" min={0} value={form.autoRejectMinExp} onChange={e => set('autoRejectMinExp', e.target.value)} placeholder="2" />
-                </div>
-                <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>{t.maxSalary}</label>
-                  <input className="input" type="number" value={form.autoRejectMinSalary} onChange={e => set('autoRejectMinSalary', e.target.value)} placeholder="150000" />
-                </div>
+              <div style={{ marginLeft: 24 }}>
+                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Мин. опыт (лет)</label>
+                <input className="input" type="number" min={0} value={form.autoRejectMinExp} onChange={e => set('autoRejectMinExp', e.target.value)} placeholder="2" style={{ maxWidth: 200 }} />
               </div>
             )}
           </div>

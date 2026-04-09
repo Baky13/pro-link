@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { MapPin, Clock, Users, Eye, Bookmark, BookmarkCheck, ArrowLeft, ExternalLink, Share2 } from 'lucide-react'
-import { vacancyApi, applicationApi, chatApi } from '../api'
+import { motion } from 'framer-motion'
+import { vacancyApi, applicationApi, chatApi, profileApi } from '../api'
 import { useAuthStore } from '../store'
 import { useT } from '../utils/i18n'
 import { SkeletonText } from '../components/ui/Skeleton'
@@ -21,6 +22,7 @@ export default function VacancyDetailPage() {
   const [saved, setSaved] = useState(false)
   const [coverLetter, setCoverLetter] = useState('')
   const [showApplyForm, setShowApplyForm] = useState(false)
+  const [workerProfile, setWorkerProfile] = useState(null)
 
   useEffect(() => {
     vacancyApi.getById(id)
@@ -35,11 +37,19 @@ export default function VacancyDetailPage() {
           setApplicationId(r.data.applicationId)
         }
       }).catch(() => {})
+      // Загружаем профиль работника для проверки опыта
+      profileApi.getWorker().then(r => setWorkerProfile(r.data)).catch(() => {})
     }
   }, [id])
 
+  const hasEnoughExp = !vacancy?.autoRejectMinExp || !workerProfile || workerProfile.experienceYears >= vacancy.autoRejectMinExp
+
   const handleApply = async () => {
     if (!user) { navigate('/login'); return }
+    if (!hasEnoughExp) {
+      toast.error(`Недостаточно опыта. Требуется от ${vacancy.autoRejectMinExp} лет, у вас ${workerProfile?.experienceYears} лет.`)
+      return
+    }
     if (showApplyForm) {
       setApplying(true)
       try {
@@ -58,6 +68,10 @@ export default function VacancyDetailPage() {
 
   const handleOpenChat = async () => {
     if (!applicationId) return
+    if (!hasEnoughExp) {
+      toast.error(`Недостаточно опыта. Требуется от ${vacancy.autoRejectMinExp} лет.`)
+      return
+    }
     try {
       const { data } = await chatApi.getOrCreateRoom(applicationId)
       navigate(`/chat/${data.id}`)
@@ -147,6 +161,16 @@ export default function VacancyDetailPage() {
               {vacancy.responseDeadlineDays && (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Clock size={15} /> {t.responseDeadline} {vacancy.responseDeadlineDays} {t.days}</span>
               )}
+              {vacancy.autoRejectMinExp > 0 && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--warning)', fontWeight: 600 }}>
+                  💼 Опыт от {vacancy.autoRejectMinExp} лет
+                </span>
+              )}
+              {vacancy.autoRejectMinAge > 0 && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--warning)', fontWeight: 600 }}>
+                  👤 Возраст от {vacancy.autoRejectMinAge} лет
+                </span>
+              )}
             </div>
 
             {/* Tags */}
@@ -178,6 +202,18 @@ export default function VacancyDetailPage() {
                 </div>
               </>
             )}
+
+            {/* Auto reject requirements */}
+            {vacancy.autoRejectMinExp > 0 && (
+              <div style={{ marginTop: 24, padding: '16px 20px', borderRadius: 10, background: 'var(--warning-50, #fffbeb)', border: '1.5px solid var(--warning)' }}>
+                <p style={{ fontWeight: 700, fontSize: 14, color: 'var(--warning-700, #b45309)', marginBottom: 6 }}>
+                  ⚠️ Требования для отклика
+                </p>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                  💼 Опыт работы: строго от <strong>{vacancy.autoRejectMinExp} лет</strong>
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Apply form */}
@@ -196,7 +232,12 @@ export default function VacancyDetailPage() {
           <div className="card" style={{ padding: 24, marginBottom: 16 }}>
             {user?.role === 'WORKER' && (
               <>
-                <button className="btn-primary" style={{ width: '100%', marginBottom: 10, fontSize: 16, padding: '12px 20px' }}
+                {vacancy.autoRejectMinExp > 0 && workerProfile && workerProfile.experienceYears < vacancy.autoRejectMinExp && (
+                  <div style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--danger-50, #fef2f2)', border: '1.5px solid var(--danger)', marginBottom: 10, fontSize: 13, color: 'var(--danger)', fontWeight: 600 }}>
+                    ⚠️ У вас {workerProfile.experienceYears} лет опыта, требуется от {vacancy.autoRejectMinExp} лет. Отклик будет автоматически отклонён.
+                  </div>
+                )}
+                <button className="btn-primary" style={{ width: '100%', marginBottom: 10, fontSize: 16, padding: '12px 20px', opacity: !hasEnoughExp ? 0.5 : 1 }}
                   onClick={handleApply} disabled={applied || applying}>
                   {applied ? t.applied : applying ? t.loading : showApplyForm ? t.sendApplication : t.apply}
                 </button>
@@ -207,8 +248,31 @@ export default function VacancyDetailPage() {
                   </button>
                 )}
                 {showApplyForm && (
-                  <button className="btn-ghost" style={{ width: '100%', marginBottom: 10 }}
-                    onClick={() => setShowApplyForm(false)}>{t.cancel}</button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    style={{ 
+                      width: '100%', 
+                      marginBottom: 10,
+                      padding: '12px 20px',
+                      borderRadius: 8,
+                      border: '2px solid var(--danger)',
+                      background: 'var(--danger-50, #fef2f2)',
+                      color: 'var(--danger)',
+                      fontWeight: 600,
+                      fontSize: 15,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--danger)'; e.currentTarget.style.color = 'white' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--danger-50, #fef2f2)'; e.currentTarget.style.color = 'var(--danger)' }}
+                    onClick={() => setShowApplyForm(false)}>
+                    ❌ {t.cancel}
+                  </motion.button>
                 )}
                 <button className="btn-outline" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                   onClick={handleSave}>

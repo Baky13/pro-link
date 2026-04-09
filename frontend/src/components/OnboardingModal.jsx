@@ -66,13 +66,22 @@ export default function OnboardingModal({ role, onClose }) {
             ))}
           </div>
 
-          <button
-            className="btn-primary"
-            style={{ width: '100%', padding: '13px', fontSize: 15 }}
-            onClick={steps[0].action}
-          >
-            {steps[0].btn}
-          </button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              className="btn-primary"
+              style={{ flex: 1, padding: '13px', fontSize: 15 }}
+              onClick={() => { onClose(); navigate('/profile') }}
+            >
+              {steps[0].btn}
+            </button>
+            <button
+              className="btn-ghost"
+              style={{ padding: '13px 20px', fontSize: 15, border: '1.5px solid var(--border)', borderRadius: 8 }}
+              onClick={() => { onClose(); navigate('/') }}
+            >
+              Позже
+            </button>
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>

@@ -33,5 +33,11 @@ public class ChatRoom {
     private Boolean isArchived = false;
 
     @Builder.Default
+    private Boolean deletedByWorker = false;
+
+    @Builder.Default
+    private Boolean deletedByEmployer = false;
+
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 }

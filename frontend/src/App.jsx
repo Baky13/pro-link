@@ -26,6 +26,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import SavedVacanciesPage from './pages/SavedVacanciesPage'
 import VacancyMapPage from './pages/VacancyMapPage'
 import WorkersPage from './pages/WorkersPage'
+import CompaniesPage from './pages/CompaniesPage'
 import EmployerDashboard from './pages/EmployerDashboard'
 import NotFoundPage from './pages/NotFoundPage'
 
@@ -41,6 +42,7 @@ function AnimatedRoutes() {
         <Route path="/employers/:id" element={<PageTransition><EmployerProfilePage /></PageTransition>} />
         <Route path="/workers/:id" element={<PageTransition><WorkerProfilePage /></PageTransition>} />
         <Route path="/workers" element={<PageTransition><WorkersPage /></PageTransition>} />
+        <Route path="/companies" element={<PageTransition><CompaniesPage /></PageTransition>} />
         <Route path="/map" element={<PageTransition><VacancyMapPage /></PageTransition>} />
         <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
         <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />
@@ -49,8 +51,8 @@ function AnimatedRoutes() {
         {/* Auth required */}
         <Route path="/profile" element={<RequireAuth><PageTransition><ProfilePage /></PageTransition></RequireAuth>} />
         <Route path="/notifications" element={<RequireAuth><PageTransition><NotificationsPage /></PageTransition></RequireAuth>} />
-        <Route path="/chat" element={<RequireAuth><PageTransition><ChatPage /></PageTransition></RequireAuth>} />
-        <Route path="/chat/:roomId" element={<RequireAuth><PageTransition><ChatPage /></PageTransition></RequireAuth>} />
+        <Route path="/chat" element={<RequireAuth><ChatPage /></RequireAuth>} />
+        <Route path="/chat/:roomId" element={<RequireAuth><ChatPage /></RequireAuth>} />
         <Route path="/saved" element={<RequireAuth><PageTransition><SavedVacanciesPage /></PageTransition></RequireAuth>} />
 
         {/* Worker only */}

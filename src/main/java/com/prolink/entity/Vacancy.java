@@ -71,6 +71,10 @@ public class Vacancy {
 
     private Integer autoRejectMinExp;
     private Integer autoRejectMinSalary;
+    private Integer autoRejectMinAge;
+
+    @Column(columnDefinition = "TEXT")
+    private String autoRejectCustomCriteria;
 
     private LocalDateTime lastReopenedAt;
 

@@ -113,7 +113,18 @@ public class ChatService {
         if (!room.getWorker().getId().equals(userId) && !room.getEmployer().getId().equals(userId)) {
             throw new BadRequestException("Not authorized");
         }
-        chatRoomRepository.delete(room);
+        // Мягкое удаление — только для того кто удалил
+        if (room.getWorker().getId().equals(userId)) {
+            room.setDeletedByWorker(true);
+        } else {
+            room.setDeletedByEmployer(true);
+        }
+        // Если оба удалили — физически удаляем
+        if (Boolean.TRUE.equals(room.getDeletedByWorker()) && Boolean.TRUE.equals(room.getDeletedByEmployer())) {
+            chatRoomRepository.delete(room);
+        } else {
+            chatRoomRepository.save(room);
+        }
     }
 
     public Page<ChatDto.MessageResponse> getMessages(Long roomId, Long userId, PageRequest pageRequest) {

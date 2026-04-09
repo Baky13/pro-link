@@ -14,9 +14,9 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     @Query("SELECT r FROM ChatRoom r WHERE r.worker.id = :workerId AND r.employer.id = :employerId")
     Optional<ChatRoom> findByWorkerIdAndEmployerId(Long workerId, Long employerId);
 
-    @Query("SELECT r FROM ChatRoom r WHERE (r.worker.id = :userId OR r.employer.id = :userId) AND r.isArchived = false")
+    @Query("SELECT r FROM ChatRoom r WHERE (r.worker.id = :userId OR r.employer.id = :userId) AND r.isArchived = false AND (r.worker.id != :userId OR r.deletedByWorker = false) AND (r.employer.id != :userId OR r.deletedByEmployer = false)")
     List<ChatRoom> findActiveByUserId(Long userId);
 
-    @Query("SELECT r FROM ChatRoom r WHERE (r.worker.id = :userId OR r.employer.id = :userId) AND r.isArchived = true")
+    @Query("SELECT r FROM ChatRoom r WHERE (r.worker.id = :userId OR r.employer.id = :userId) AND r.isArchived = true AND (r.worker.id != :userId OR r.deletedByWorker = false) AND (r.employer.id != :userId OR r.deletedByEmployer = false)")
     List<ChatRoom> findArchivedByUserId(Long userId);
 }

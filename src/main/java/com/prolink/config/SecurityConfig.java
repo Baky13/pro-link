@@ -48,18 +48,16 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/vacancies/**").permitAll()
                         .requestMatchers("/api/categories/**").permitAll()
-                        .requestMatchers("/api/salary/**").permitAll()
                         .requestMatchers("/api/workers/**").permitAll()
                         .requestMatchers("/api/workers").permitAll()
                         .requestMatchers("/api/employers/*/reviews").permitAll()
-                        .requestMatchers("/api/employers/*/exit-reasons").permitAll()
-                        .requestMatchers("/api/salary/calculate").permitAll()
+                        .requestMatchers("/api/employers/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/", "/index.html", "/static/**", "/favicon.ico", "/manifest.json").permitAll()
                         .requestMatchers("/assets/**", "/*.js", "/*.css", "/*.svg", "/*.ico", "/*.png", "/*.webp").permitAll()
-                        .requestMatchers("/login", "/register", "/forgot-password", "/map", "/saved", "/workers", "/dashboard", "/salary").permitAll()
-                        .requestMatchers("/vacancies", "/vacancies/**", "/employers/**", "/workers/**").permitAll()
+                        .requestMatchers("/login", "/register", "/forgot-password", "/map", "/saved", "/workers", "/dashboard").permitAll()
+                        .requestMatchers("/vacancies", "/vacancies/**", "/employers/**", "/workers/**", "/companies").permitAll()
                         .requestMatchers("/profile", "/applications", "/chat", "/chat/**", "/notifications", "/my-vacancies").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -71,9 +69,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        List<String> origins = new java.util.ArrayList<>(Arrays.asList(allowedOrigins.split(",")));
-        origins.add("https://poachiest-eartha-morphotonemic.ngrok-free.dev");
-        config.setAllowedOriginPatterns(List.of("*"));
+        List<String> origins = Arrays.asList(allowedOrigins.split(","));
+        config.setAllowedOriginPatterns(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

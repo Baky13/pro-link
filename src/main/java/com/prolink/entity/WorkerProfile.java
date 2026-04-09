@@ -38,6 +38,7 @@ public class WorkerProfile {
     private JobSearchStatus jobSearchStatus = JobSearchStatus.OPEN_TO_OFFERS;
 
     private LocalDate availableFrom;
+    private LocalDate birthDate;
 
     @Builder.Default
     private Integer experienceYears = 0;
