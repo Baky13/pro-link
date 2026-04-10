@@ -36,4 +36,9 @@ public interface VacancyRepository extends JpaRepository<Vacancy, Long>, JpaSpec
           AND v.isActive = TRUE
     """)
     List<Vacancy> findVacanciesWithOverdueResponses(LocalDateTime threshold);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Vacancy v SET v.isActive = false WHERE v.expiresAt IS NOT NULL AND v.expiresAt < :now AND v.isActive = true")
+    int deactivateExpired(LocalDateTime now);
 }

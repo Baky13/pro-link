@@ -70,6 +70,7 @@ public class VacancyDto {
         private Integer salaryTo;
         private Vacancy.EmploymentType employmentType;
         private String search;
+        private String skill;
         private Boolean isHot;
         private Boolean isUrgent;
         private WorkerProfile.JobSearchStatus workerStatus;

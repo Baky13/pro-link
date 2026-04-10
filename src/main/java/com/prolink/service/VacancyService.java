@@ -8,6 +8,7 @@ import com.prolink.exception.BadRequestException;
 import com.prolink.exception.ResourceNotFoundException;
 import com.prolink.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class VacancyService {
@@ -159,6 +161,12 @@ public class VacancyService {
                             cb.like(cb.lower(root.get("title")), like),
                             cb.like(cb.lower(root.get("description")), like)
                     ));
+                }
+                if (filter.getSkill() != null && !filter.getSkill().isBlank()) {
+                    String skillLike = "%" + filter.getSkill().toLowerCase() + "%";
+                    var skillJoin = root.join("skills", jakarta.persistence.criteria.JoinType.INNER);
+                    predicates.add(cb.like(cb.lower(skillJoin.get("skillName")), skillLike));
+                    query.distinct(true);
                 }
                 if (Boolean.TRUE.equals(filter.getIsHot()))
                     predicates.add(cb.isTrue(root.get("isHot")));

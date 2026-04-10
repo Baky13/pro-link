@@ -26,6 +26,7 @@ export default function VacanciesPage() {
     employmentType: searchParams.get('employmentType') || '',
     salaryFrom: searchParams.get('salaryFrom') || '',
     salaryTo: searchParams.get('salaryTo') || '',
+    skill: searchParams.get('skill') || '',
     isHot: searchParams.get('isHot') || '',
     isUrgent: searchParams.get('isUrgent') || '',
     page: 0,
@@ -49,7 +50,7 @@ export default function VacanciesPage() {
   useEffect(() => { fetchVacancies() }, [fetchVacancies])
 
   const setFilter = (key, val) => setFilters(f => ({ ...f, [key]: val, page: 0 }))
-  const clearFilters = () => setFilters({ search: '', city: '', categoryId: '', employmentType: '', salaryFrom: '', salaryTo: '', isHot: '', isUrgent: '', page: 0 })
+  const clearFilters = () => setFilters({ search: '', city: '', categoryId: '', employmentType: '', salaryFrom: '', salaryTo: '', skill: '', isHot: '', isUrgent: '', page: 0 })
   const activeFiltersCount = [filters.categoryId, filters.employmentType, filters.salaryFrom, filters.salaryTo, filters.isHot, filters.isUrgent].filter(Boolean).length
 
   return (
@@ -137,6 +138,10 @@ export default function VacanciesPage() {
                       <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
                     ))}
                   </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Навык</label>
+                  <input className="input" value={filters.skill} onChange={e => setFilter('skill', e.target.value)} placeholder="React, Java..." />
                 </div>
                 <div>
                   <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Зарплата от (KGS)</label>

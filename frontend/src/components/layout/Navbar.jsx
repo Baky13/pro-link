@@ -1,10 +1,12 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Sun, Moon, Bell, ChevronDown, Menu, X } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore, useThemeStore, useNotifStore } from '../../store'
 import { useT } from '../../utils/i18n'
 import { authApi, notificationApi } from '../../api'
+import { Client } from '@stomp/stompjs'
+import SockJS from 'sockjs-client'
 
 export default function Navbar() {
   const { user, logout } = useAuthStore()
@@ -16,6 +18,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const stompRef = useRef(null)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10)
@@ -25,11 +28,30 @@ export default function Navbar() {
 
   useEffect(() => {
     if (!user) return
+    // Получаем начальный счётчик
     notificationApi.getUnreadCount().then(r => setUnreadCount(r.data.count || 0)).catch(() => {})
-    const interval = setInterval(() => {
-      notificationApi.getUnreadCount().then(r => setUnreadCount(r.data.count || 0)).catch(() => {})
-    }, 30000)
-    return () => clearInterval(interval)
+
+    // Подписываемся на WebSocket обновления счётчика
+    const token = localStorage.getItem('accessToken')
+    const client = new Client({
+      webSocketFactory: () => new SockJS(
+        window.location.hostname === 'localhost'
+          ? 'http://localhost:8080/ws'
+          : `${window.location.origin}/ws`
+      ),
+      connectHeaders: { Authorization: `Bearer ${token}` },
+      onConnect: () => {
+        client.subscribe(`/user/queue/unread-count`, msg => {
+          const data = JSON.parse(msg.body)
+          setUnreadCount(data.count || 0)
+        })
+      },
+      reconnectDelay: 5000,
+    })
+    client.activate()
+    stompRef.current = client
+
+    return () => { client.deactivate() }
   }, [user])
 
   useEffect(() => {

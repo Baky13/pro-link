@@ -36,4 +36,16 @@ public class AuthController {
         authService.logout(user.getId());
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<String> verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
+        return ResponseEntity.ok("Email подтверждён!");
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<String> resendVerification(@RequestBody AuthDto.LoginRequest request) {
+        authService.resendVerification(request.getEmail());
+        return ResponseEntity.ok("Письмо отправлено");
+    }
 }

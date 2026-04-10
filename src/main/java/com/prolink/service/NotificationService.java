@@ -5,6 +5,7 @@ import com.prolink.entity.Notification;
 import com.prolink.entity.User;
 import com.prolink.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -12,6 +13,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -32,6 +34,13 @@ public class NotificationService {
 
         NotificationDto dto = toDto(notification);
         messagingTemplate.convertAndSendToUser(user.getEmail(), "/queue/notifications", dto);
+
+        // Пушим обновление счётчика через WebSocket
+        long unreadCount = notificationRepository.countByUserIdAndIsReadFalse(user.getId());
+        messagingTemplate.convertAndSendToUser(user.getEmail(), "/queue/unread-count",
+                java.util.Map.of("count", unreadCount));
+
+        log.info("Notification sent to user {}: {}", user.getEmail(), title);
     }
 
     public Page<NotificationDto> getNotifications(Long userId, Pageable pageable) {

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { profileApi, chatApi } from '../api'
 import { useAuthStore } from '../store'
 import { useT } from '../utils/i18n'
+import { useDebounce } from '../hooks/useDebounce'
 import toast from 'react-hot-toast'
 
 function WorkerCard({ worker }) {
@@ -118,14 +119,16 @@ export default function WorkersPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState({ search: '', city: '', minExp: '', maxSalary: '', page: 0 })
   const [totalPages, setTotalPages] = useState(0)
+  const debouncedSearch = useDebounce(filters.search)
+  const debouncedCity = useDebounce(filters.city)
 
   const fetchWorkers = useCallback(() => {
     setLoading(true)
-    const params = Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== ''))
+    const params = Object.fromEntries(Object.entries({ ...filters, search: debouncedSearch, city: debouncedCity }).filter(([, v]) => v !== ''))
     profileApi.searchWorkers({ ...params, size: 20 })
       .then(r => { setWorkers(r.data.content || []); setTotalPages(r.data.totalPages || 0) })
       .finally(() => setLoading(false))
-  }, [filters])
+  }, [debouncedSearch, debouncedCity, filters.minExp, filters.maxSalary, filters.page])
 
   useEffect(() => { fetchWorkers() }, [fetchWorkers])
 

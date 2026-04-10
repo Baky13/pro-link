@@ -4,6 +4,7 @@ import { Search, Star, Users, MessageCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { profileApi, chatApi } from '../api'
 import { useAuthStore } from '../store'
+import { useDebounce } from '../hooks/useDebounce'
 import toast from 'react-hot-toast'
 
 function CompanyCard({ employer }) {
@@ -91,6 +92,8 @@ export default function CompaniesPage() {
   const [industry, setIndustry] = useState('')
   const [totalPages, setTotalPages] = useState(0)
   const [page, setPage] = useState(0)
+  const debouncedSearch = useDebounce(search)
+  const debouncedIndustry = useDebounce(industry)
 
   const fetchEmployers = useCallback(() => {
     if (loading) {
@@ -99,12 +102,12 @@ export default function CompaniesPage() {
       setSearching(true)
     }
     const params = { page, size: 20 }
-    if (search) params.search = search
-    if (industry) params.industry = industry
+    if (debouncedSearch) params.search = debouncedSearch
+    if (debouncedIndustry) params.industry = debouncedIndustry
     profileApi.searchEmployers(params)
       .then(r => { setEmployers(r.data.content || []); setTotalPages(r.data.totalPages || 0) })
       .finally(() => { setLoading(false); setSearching(false) })
-  }, [search, industry, page])
+  }, [debouncedSearch, debouncedIndustry, page])
 
   useEffect(() => { fetchEmployers() }, [fetchEmployers])
 

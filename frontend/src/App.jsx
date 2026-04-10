@@ -23,6 +23,7 @@ import MyVacanciesPage from './pages/MyVacanciesPage'
 import VacancyApplicationsPage from './pages/VacancyApplicationsPage'
 import WorkerProfilePage from './pages/WorkerProfilePage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import VerifyEmailPage from './pages/VerifyEmailPage'
 import SavedVacanciesPage from './pages/SavedVacanciesPage'
 import VacancyMapPage from './pages/VacancyMapPage'
 import WorkersPage from './pages/WorkersPage'
@@ -47,6 +48,7 @@ function AnimatedRoutes() {
         <Route path="/login" element={<PageTransition><LoginPage /></PageTransition>} />
         <Route path="/register" element={<PageTransition><RegisterPage /></PageTransition>} />
         <Route path="/forgot-password" element={<PageTransition><ForgotPasswordPage /></PageTransition>} />
+        <Route path="/verify-email" element={<PageTransition><VerifyEmailPage /></PageTransition>} />
 
         {/* Auth required */}
         <Route path="/profile" element={<RequireAuth><PageTransition><ProfilePage /></PageTransition></RequireAuth>} />

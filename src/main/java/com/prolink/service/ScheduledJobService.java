@@ -68,6 +68,16 @@ public class ScheduledJobService {
         log.info("Employer overdue response notifications sent: {}", overdueVacancies.size());
     }
 
+    // Каждый час — автодеактивация истёкших вакансий
+    @Scheduled(cron = "0 0 * * * *")
+    @Transactional
+    public void deactivateExpiredVacancies() {
+        int count = vacancyRepository.deactivateExpired(LocalDateTime.now());
+        if (count > 0) {
+            log.info("Deactivated {} expired vacancies", count);
+        }
+    }
+
     // Каждый день в 09:00 — уведомляем о повторно открытых вакансиях
     @Scheduled(cron = "0 0 9 * * *")
     @Transactional
