@@ -2,8 +2,11 @@ package com.prolink.dto;
 
 import com.prolink.entity.Vacancy;
 import com.prolink.entity.WorkerProfile;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -13,23 +16,47 @@ public class VacancyDto {
 
     @Data
     public static class Request {
-        @NotBlank private String title;
-        @NotBlank private String description;
+        @NotBlank @Size(min = 3, max = 200, message = "Название: от 3 до 200 символов")
+        private String title;
+
+        @NotBlank @Size(max = 5000, message = "Описание: максимум 5000 символов")
+        private String description;
+
+        @Size(max = 2000, message = "Требования: максимум 2000 символов")
         private String requirements;
+
+        @Min(value = 0, message = "Зарплата не может быть отрицательной")
+        @Max(value = 100_000_000, message = "Зарплата слишком большая")
         private Integer salaryFrom;
+
+        @Min(value = 0, message = "Зарплата не может быть отрицательной")
+        @Max(value = 100_000_000, message = "Зарплата слишком большая")
         private Integer salaryTo;
+
         private String currency;
+
         @NotNull private Long categoryId;
+
+        @Size(max = 100, message = "Город: максимум 100 символов")
         private String city;
-        private String address;
+
+        @Size(max = 500) private String address;
         private Double latitude;
         private Double longitude;
         private Vacancy.EmploymentType employmentType;
         private Boolean isHot;
         private Boolean isUrgent;
+
+        @Min(value = 1, message = "Срок ответа — минимум 1 день")
+        @Max(value = 90, message = "Срок ответа — максимум 90 дней")
         private Integer responseDeadlineDays;
+
         private Boolean autoRejectEnabled;
+
+        @Min(value = 0, message = "Минимальный опыт не может быть отрицательным")
+        @Max(value = 80, message = "Минимальный опыт слишком большой")
         private Integer autoRejectMinExp;
+
         private List<String> skills;
         private LocalDateTime expiresAt;
     }
@@ -58,6 +85,7 @@ public class VacancyDto {
         private List<String> skills;
         private CategoryDto category;
         private EmployerDto.Summary employer;
+        private Long employerUserId;
         private LocalDateTime createdAt;
         private LocalDateTime expiresAt;
     }

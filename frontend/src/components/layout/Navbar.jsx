@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Sun, Moon, Bell, ChevronDown, Menu, X } from 'lucide-react'
+import { Sun, Moon, Bell, ChevronDown, Menu, X, ArrowLeft, MessageCircle } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore, useThemeStore, useNotifStore } from '../../store'
@@ -107,6 +107,17 @@ export default function Navbar() {
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px', height: 64, display: 'flex', alignItems: 'center', gap: 8 }}>
 
+          {/* Back button — shown on inner pages */}
+          {location.pathname !== '/' && location.pathname !== '/login' && location.pathname !== '/register' && (
+            <button
+              onClick={() => navigate(-1)}
+              aria-label="Назад"
+              title="Назад"
+              style={{ width: 40, height: 40, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)', marginRight: 8, flexShrink: 0 }}>
+              <ArrowLeft size={18} />
+            </button>
+          )}
+
           {/* Logo */}
           <Link to="/" style={{ fontWeight: 900, fontSize: 22, marginRight: 20, letterSpacing: -0.5, display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
             <span style={{ background: 'linear-gradient(135deg, #5b5ef4, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Pro</span>
@@ -131,7 +142,9 @@ export default function Navbar() {
 
             {/* Theme toggle */}
             <button onClick={toggle}
-              style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)', transition: 'all 0.15s', flexShrink: 0 }}>
+              aria-label={theme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему'}
+              title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
+              style={{ width: 40, height: 40, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)', transition: 'all 0.15s', flexShrink: 0 }}>
               <motion.div key={theme} initial={{ rotate: -30, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} transition={{ duration: 0.2 }}>
                 {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
               </motion.div>
@@ -139,9 +152,19 @@ export default function Navbar() {
 
             {user ? (
               <>
+                {/* Chat */}
+                <Link to="/chat"
+                  aria-label="Чаты"
+                  title="Чаты"
+                  style={{ width: 40, height: 40, borderRadius: 8, border: '1px solid var(--border)', background: isActive('/chat') ? 'var(--primary-light)' : 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', flexShrink: 0 }}>
+                  <MessageCircle size={16} color={isActive('/chat') ? 'var(--primary)' : 'var(--text-secondary)'} />
+                </Link>
+
                 {/* Bell */}
                 <Link to="/notifications"
-                  style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: unreadCount > 0 ? 'var(--primary-light)' : 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', transition: 'all 0.15s', flexShrink: 0 }}>
+                  aria-label={unreadCount > 0 ? `Уведомления, непрочитанных: ${unreadCount}` : 'Уведомления'}
+                  title="Уведомления"
+                  style={{ width: 40, height: 40, borderRadius: 8, border: '1px solid var(--border)', background: unreadCount > 0 ? 'var(--primary-light)' : 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', transition: 'all 0.15s', flexShrink: 0 }}>
                   <Bell size={16} color={unreadCount > 0 ? 'var(--primary)' : 'var(--text-secondary)'} />
                   <AnimatePresence>
                     {unreadCount > 0 && (
@@ -157,7 +180,10 @@ export default function Navbar() {
                 {/* User menu — desktop */}
                 <div className="hide-mobile" style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
                   <button onClick={() => setMenuOpen(v => !v)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px 5px 5px', borderRadius: 10, border: '1px solid var(--border)', background: menuOpen ? 'var(--bg-secondary)' : 'transparent', cursor: 'pointer', transition: 'all 0.15s' }}>
+                    aria-label="Меню пользователя"
+                    aria-haspopup="menu"
+                    aria-expanded={menuOpen}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px 5px 5px', borderRadius: 10, border: '1px solid var(--border)', background: menuOpen ? 'var(--bg-secondary)' : 'transparent', cursor: 'pointer', transition: 'all 0.15s', minHeight: 40 }}>
                     <div style={{ width: 30, height: 30, borderRadius: 8, background: 'linear-gradient(135deg, #5b5ef4, #8b5cf6)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13, flexShrink: 0 }}>
                       {user.firstName?.[0]?.toUpperCase()}
                     </div>
@@ -213,7 +239,10 @@ export default function Navbar() {
             <button
               className="show-mobile"
               onClick={() => setMobileOpen(v => !v)}
-              style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              aria-label={mobileOpen ? 'Закрыть меню' : 'Открыть меню'}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-menu"
+              style={{ width: 44, height: 44, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <motion.div key={mobileOpen ? 'x' : 'menu'} initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} transition={{ duration: 0.2 }}>
                 {mobileOpen ? <X size={18} color="var(--text)" /> : <Menu size={18} color="var(--text)" />}
               </motion.div>
@@ -226,6 +255,7 @@ export default function Navbar() {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
+            id="mobile-menu"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useT } from '../../utils/i18n'
 import { useState } from 'react'
 import { vacancyApi } from '../../api'
+import Avatar from './Avatar'
 
 export default function VacancyCard({ vacancy, onSaveToggle }) {
     const t = useT()
@@ -69,18 +70,21 @@ export default function VacancyCard({ vacancy, onSaveToggle }) {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, marginLeft: 12, flexShrink: 0 }}>
-            {vacancy.employer?.logoUrl ? (
-              <img src={vacancy.employer.logoUrl} alt=""
-                style={{ width: 42, height: 42, borderRadius: 10, objectFit: 'cover', border: '1px solid var(--border)' }} />
-            ) : (
-              <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 800, color: 'var(--primary)' }}>
-                {vacancy.employer?.companyName?.[0]}
-              </div>
-            )}
+            <Avatar
+              src={vacancy.employer?.logoUrl}
+              name={vacancy.employer?.companyName}
+              size={42}
+              square
+              bg="var(--primary-light)"
+              style={{ border: '1px solid var(--border)', color: 'var(--primary)' }}
+            />
             <motion.button
               onClick={handleSave}
+              aria-label={saved ? 'Удалить из сохранённых' : 'Сохранить вакансию'}
+              aria-pressed={saved}
+              title={saved ? 'В сохранённых' : 'Сохранить'}
               whileTap={{ scale: 0.85 }}
-              style={{ background: 'none', border: 'none', color: saved ? 'var(--primary)' : 'var(--text-secondary)', padding: 0, transition: 'color 0.15s' }}>
+              style={{ background: 'none', border: 'none', color: saved ? 'var(--primary)' : 'var(--text-secondary)', padding: 6, minWidth: 32, minHeight: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', borderRadius: 6, transition: 'color 0.15s' }}>
               <AnimatePresence mode="wait">
                 <motion.div key={saved ? 'saved' : 'unsaved'} initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.7, opacity: 0 }} transition={{ duration: 0.15 }}>
                   {saved ? <BookmarkCheck size={17} /> : <Bookmark size={17} />}

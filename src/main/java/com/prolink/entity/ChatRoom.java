@@ -38,6 +38,10 @@ public class ChatRoom {
     @Builder.Default
     private Boolean deletedByEmployer = false;
 
+    private LocalDateTime workerClearedAt;
+
+    private LocalDateTime employerClearedAt;
+
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 }

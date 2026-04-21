@@ -8,6 +8,7 @@ import { chatApi, notificationApi } from '../api'
 import { useAuthStore, useNotifStore } from '../store'
 import { useT } from '../utils/i18n'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
+import Avatar from '../components/ui/Avatar'
 import toast from 'react-hot-toast'
 
 export default function ChatPage() {
@@ -137,7 +138,10 @@ export default function ChatPage() {
             if (message.roomId === currentRoom) {
               // Только чужие сообщения — своё уже добавлено локально
               if (message.senderId !== user.id) {
-                setMessages(prev => [...prev, message])
+                setMessages(prev => {
+                  if (message.id && prev.some(m => m.id === message.id)) return prev
+                  return [...prev, message]
+                })
                 setTimeout(() => {
                   if (messagesRef.current) {
                     messagesRef.current.scrollTop = messagesRef.current.scrollHeight
@@ -177,7 +181,13 @@ export default function ChatPage() {
     })
     client.activate()
     stompRef.current = client
-    return () => { client.deactivate() }
+    return () => {
+      try {
+        if (client.active) client.deactivate()
+      } catch (e) {
+        console.error('WS deactivate error:', e)
+      }
+    }
   }, [user, rooms])
 
   const loadMore = async () => {
@@ -206,13 +216,17 @@ export default function ChatPage() {
     setInput('')
     try {
       const { data } = await chatApi.sendMessage(activeRoom, content)
-      setMessages(prev => [...prev, data])
+      setMessages(prev => {
+        if (data?.id && prev.some(m => m.id === data.id)) return prev
+        return [...prev, data]
+      })
       setTimeout(() => {
         if (messagesRef.current) {
           messagesRef.current.scrollTop = messagesRef.current.scrollHeight
         }
       }, 50)
-    } catch {
+    } catch (e) {
+      console.error('Send message failed:', e)
       toast.error('Не удалось отправить')
       setInput(content)
     } finally { setSending(false) }
@@ -351,18 +365,14 @@ export default function ChatPage() {
               const isOnline = onlineUsers.has(other?.id)
               const unread = unreadMap[room.id] || 0
               return (
-                <button key={room.id} onClick={() => handleRoomSelect(room.id)}
-                  style={{ width: '100%', padding: '14px 16px', border: 'none', textAlign: 'left', cursor: 'pointer', background: isActive ? 'var(--primary-light)' : 'transparent', borderLeft: isActive ? '3px solid var(--primary)' : '3px solid transparent', transition: 'all 0.15s' }}>
+                <div key={room.id} role="button" tabIndex={0}
+                  onClick={() => handleRoomSelect(room.id)}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleRoomSelect(room.id) } }}
+                  style={{ width: '100%', padding: '14px 16px', textAlign: 'left', cursor: 'pointer', background: isActive ? 'var(--primary-light)' : 'transparent', borderLeft: isActive ? '3px solid var(--primary)' : '3px solid transparent', transition: 'all 0.15s' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     {/* Avatar with online dot */}
                     <div style={{ position: 'relative', flexShrink: 0 }}>
-                      {other?.avatarUrl ? (
-                        <img src={other.avatarUrl} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
-                      ) : (
-                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: isActive ? 'var(--primary)' : 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, color: isActive ? 'white' : 'var(--text-secondary)' }}>
-                          {other?.firstName?.[0]?.toUpperCase() || '?'}
-                        </div>
-                      )}
+                      <Avatar src={other?.avatarUrl} name={other?.firstName} size={40} />
                       {isOnline && (
                         <div style={{ position: 'absolute', bottom: 1, right: 1, width: 10, height: 10, borderRadius: '50%', background: '#10b981', border: '2px solid var(--bg-card)' }} />
                       )}
@@ -425,7 +435,7 @@ export default function ChatPage() {
                       </AnimatePresence>
                     </div>
                   </div>
-                </button>
+                </div>
               )
             })}
           </div>
@@ -449,13 +459,7 @@ export default function ChatPage() {
                     ← Назад
                   </button>
                   <div style={{ position: 'relative' }}>
-                    {getOtherUser(activeRoomData)?.avatarUrl ? (
-                      <img src={getOtherUser(activeRoomData).avatarUrl} alt="" style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover' }} />
-                    ) : (
-                      <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'white', fontSize: 15 }}>
-                        {getOtherUser(activeRoomData)?.firstName?.[0]?.toUpperCase()}
-                      </div>
-                    )}
+                    <Avatar src={getOtherUser(activeRoomData)?.avatarUrl} name={getOtherUser(activeRoomData)?.firstName} size={38} />
                     {onlineUsers.has(getOtherUser(activeRoomData)?.id) && (
                       <div style={{ position: 'absolute', bottom: 1, right: 1, width: 10, height: 10, borderRadius: '50%', background: '#10b981', border: '2px solid var(--bg-card)' }} />
                     )}

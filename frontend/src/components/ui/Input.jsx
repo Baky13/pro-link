@@ -63,7 +63,7 @@ export default function Input({
           disabled={disabled}
           autoComplete={autoComplete}
           maxLength={maxLength}
-          className=\"input\"
+          className="input"
           style={{
             borderColor: hasError 
               ? 'var(--danger)' 
@@ -85,7 +85,7 @@ export default function Input({
         {/* Password toggle */}
         {type === 'password' && (
           <button
-            type=\"button\"
+            type="button"
             onClick={() => setShowPassword(!showPassword)}
             style={{
               position: 'absolute',

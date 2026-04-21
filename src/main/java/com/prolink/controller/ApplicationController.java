@@ -24,6 +24,9 @@ public class ApplicationController {
     public ResponseEntity<ApplicationDto.Response> apply(
             @Valid @RequestBody ApplicationDto.Request request,
             @AuthenticationPrincipal User user) {
+        if (user.getRole() != User.Role.WORKER) {
+            throw new com.prolink.exception.BadRequestException("Only WORKER can apply to vacancies");
+        }
         return ResponseEntity.ok(applicationService.apply(request, user.getId()));
     }
 
@@ -39,14 +42,20 @@ public class ApplicationController {
             @PathVariable Long vacancyId,
             @AuthenticationPrincipal User user,
             @PageableDefault(size = 20) Pageable pageable) {
+        if (user.getRole() != User.Role.EMPLOYER) {
+            throw new com.prolink.exception.BadRequestException("Only EMPLOYER can view vacancy applications");
+        }
         return applicationService.getVacancyApplications(vacancyId, user.getId(), pageable);
     }
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<ApplicationDto.Response> updateStatus(
             @PathVariable Long id,
-            @RequestBody ApplicationDto.StatusUpdate request,
+            @Valid @RequestBody ApplicationDto.StatusUpdate request,
             @AuthenticationPrincipal User user) {
+        if (user.getRole() != User.Role.EMPLOYER) {
+            throw new com.prolink.exception.BadRequestException("Only EMPLOYER can change application status");
+        }
         return ResponseEntity.ok(applicationService.updateStatus(id, request.getStatus(), user.getId()));
     }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { MapPin, Clock, Users, Eye, Bookmark, BookmarkCheck, ArrowLeft, ExternalLink, Share2 } from 'lucide-react'
+import { MapPin, Clock, Users, Eye, Bookmark, BookmarkCheck, ArrowLeft, ExternalLink, Share2, Edit2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { vacancyApi, applicationApi, chatApi, profileApi } from '../api'
 import { useAuthStore } from '../store'
@@ -118,15 +118,23 @@ export default function VacancyDetailPage() {
 
   return (
     <div style={{ maxWidth: 900, margin: '40px auto', padding: '0 20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, gap: 8, flexWrap: 'wrap' }}>
         <button className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           onClick={() => navigate(-1)}>
           <ArrowLeft size={16} /> {t.back}
         </button>
-        <button className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-          onClick={handleShare}>
-          <Share2 size={16} /> Поделиться
-        </button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {user?.role === 'EMPLOYER' && vacancy.employerUserId === user.id && (
+            <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px' }}
+              onClick={() => navigate(`/vacancies/${id}/edit`)}>
+              <Edit2 size={16} /> Изменить
+            </button>
+          )}
+          <button className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            onClick={handleShare}>
+            <Share2 size={16} /> Поделиться
+          </button>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 24, alignItems: 'start' }}>

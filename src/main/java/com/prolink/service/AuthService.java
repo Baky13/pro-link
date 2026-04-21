@@ -40,8 +40,7 @@ public class AuthService {
     @Value("${jwt.refresh-expiration}")
     private long refreshExpiration;
 
-    @Value("${app.frontend-url:https://prolink-backend-kokg.onrender.com}")
-    private String frontendUrl;
+    private static final String FRONTEND_URL = "https://prolink-backend-kokg.onrender.com";
 
     private record VerifyEntry(Long userId, LocalDateTime expiresAt) {}
     private final Map<String, VerifyEntry> verifyTokens = new ConcurrentHashMap<>();
@@ -113,10 +112,11 @@ public class AuthService {
 
     @Transactional
     public AuthDto.AuthResponse refresh(String refreshToken) {
-        RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
+        RefreshToken token = refreshTokenRepository.findByTokenAndRevokedFalse(refreshToken)
                 .orElseThrow(() -> new BadRequestException("Invalid refresh token"));
         if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
-            refreshTokenRepository.delete(token);
+            token.setRevoked(true);
+            refreshTokenRepository.save(token);
             throw new BadRequestException("Refresh token expired");
         }
         return buildAuthResponse(token.getUser());
@@ -131,7 +131,7 @@ public class AuthService {
         try {
             String token = UUID.randomUUID().toString();
             verifyTokens.put(token, new VerifyEntry(user.getId(), LocalDateTime.now().plusHours(24)));
-            String link = frontendUrl + "/verify-email?token=" + token;
+            String link = FRONTEND_URL + "/verify-email?token=" + token;
 
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(user.getEmail());

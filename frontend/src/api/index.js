@@ -50,6 +50,7 @@ export const profileApi = {
     form.append('file', file)
     return api.post(`/upload/${type}`, form)
   },
+  deleteFile: type => api.delete(`/upload/${type}`),
 }
 
 // Reviews

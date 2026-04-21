@@ -61,15 +61,17 @@ public class ProfileService {
 
         profile.setTitle(request.getTitle());
         profile.setBio(request.getBio());
-        // Валидация URL ссылок
-        profile.setGithubUrl(validateUrl(request.getGithubUrl()));
-        profile.setPortfolioUrl(validateUrl(request.getPortfolioUrl()));
-        profile.setLinkedinUrl(validateUrl(request.getLinkedinUrl()));
+        // Нормализация URL: добавляем https:// если протокола нет
+        profile.setGithubUrl(normalizeUrl(request.getGithubUrl()));
+        profile.setPortfolioUrl(normalizeUrl(request.getPortfolioUrl()));
+        profile.setLinkedinUrl(normalizeUrl(request.getLinkedinUrl()));
         profile.setExpectedSalary(request.getExpectedSalary());
         profile.setIsOpenToWork(request.getIsOpenToWork());
         if (request.getJobSearchStatus() != null) profile.setJobSearchStatus(request.getJobSearchStatus());
         profile.setAvailableFrom(request.getAvailableFrom());
-        // experienceYears считается автоматически по датам опыта работы
+        if (request.getExperienceYears() != null) {
+            profile.setExperienceYears(request.getExperienceYears());
+        }
 
         if (request.getSkills() != null) {
             profile.getSkills().clear();
@@ -80,6 +82,45 @@ public class ProfileService {
         }
 
         return toWorkerResponse(workerProfileRepository.save(profile));
+    }
+
+    @Transactional
+    public void deleteUpload(Long userId, String type) {
+        if (!List.of("avatars", "resumes", "logos").contains(type)) {
+            throw new BadRequestException("Недопустимый тип");
+        }
+        String urlToDelete = null;
+        if ("avatars".equals(type)) {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            urlToDelete = user.getAvatarUrl();
+            user.setAvatarUrl(null);
+            userRepository.save(user);
+        } else if ("resumes".equals(type)) {
+            WorkerProfile profile = workerProfileRepository.findByUserId(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Worker profile not found"));
+            urlToDelete = profile.getResumeUrl();
+            profile.setResumeUrl(null);
+            workerProfileRepository.save(profile);
+        } else {
+            EmployerProfile profile = employerProfileRepository.findByUserId(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Employer profile not found"));
+            urlToDelete = profile.getLogoUrl();
+            profile.setLogoUrl(null);
+            employerProfileRepository.save(profile);
+        }
+        // Удаляем физический файл, если возможно
+        if (urlToDelete != null && urlToDelete.startsWith("/uploads/")) {
+            try {
+                Path file = Paths.get(urlToDelete.substring(1)).normalize();
+                Path uploadsRoot = Paths.get("uploads").toAbsolutePath().normalize();
+                if (file.toAbsolutePath().normalize().startsWith(uploadsRoot)) {
+                    Files.deleteIfExists(file);
+                }
+            } catch (IOException e) {
+                log.warn("Failed to delete file {}: {}", urlToDelete, e.getMessage());
+            }
+        }
     }
 
     public String uploadFile(Long userId, MultipartFile file, String type) throws IOException {
@@ -165,15 +206,16 @@ public class ProfileService {
                 .orElseThrow(() -> new ResourceNotFoundException("Employer profile not found"));
         profile.setCompanyName(request.getCompanyName());
         profile.setDescription(request.getDescription());
-        // Валидация URL сайта
-        if (request.getWebsite() != null && !request.getWebsite().isBlank()) {
-            String website = request.getWebsite().trim();
-            if (!website.startsWith("http://") && !website.startsWith("https://")) {
-                throw new BadRequestException("Сайт должен начинаться с http:// или https://");
+        profile.setWebsite(normalizeUrl(request.getWebsite()));
+        if (request.getFoundedYear() != null) {
+            int currentYear = java.time.Year.now().getValue();
+            if (request.getFoundedYear() > currentYear) {
+                throw new BadRequestException("Год основания не может быть в будущем");
             }
-            profile.setWebsite(website);
-        } else {
-            profile.setWebsite(null);
+        }
+        if (request.getIndustry() != null && !request.getIndustry().isBlank()
+                && !ALLOWED_INDUSTRIES.contains(request.getIndustry().trim())) {
+            throw new BadRequestException("Выберите отрасль из списка");
         }
         profile.setIndustry(request.getIndustry());
         profile.setCompanySize(request.getCompanySize());
@@ -213,14 +255,47 @@ public class ProfileService {
 
     // ---- Mappers ----
 
-    private String validateUrl(String url) {
+    private static final java.util.regex.Pattern DOMAIN_RE = java.util.regex.Pattern.compile(
+            "^(https?://)?([\\p{L}\\d](?:[\\p{L}\\d-]{0,61}[\\p{L}\\d])?\\.)+[\\p{L}]{2,}(:\\d{1,5})?(/\\S*)?$",
+            java.util.regex.Pattern.CASE_INSENSITIVE
+    );
+
+    private String normalizeUrl(String url) {
         if (url == null || url.isBlank()) return null;
         String trimmed = url.trim();
-        if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
-            throw new BadRequestException("URL должен начинаться с http:// или https://");
+        String lower = trimmed.toLowerCase();
+        if (lower.startsWith("javascript:") || lower.startsWith("data:") || lower.startsWith("file:")) {
+            throw new BadRequestException("Недопустимая ссылка");
+        }
+        if (!DOMAIN_RE.matcher(trimmed).matches()) {
+            throw new BadRequestException("Некорректная ссылка. Пример: example.com или https://example.com");
+        }
+        if (!lower.startsWith("http://") && !lower.startsWith("https://")) {
+            trimmed = "https://" + trimmed;
         }
         return trimmed;
     }
+
+    private static final java.util.Set<String> ALLOWED_INDUSTRIES = java.util.Set.of(
+            "IT и разработка",
+            "Финансы и банки",
+            "Образование",
+            "Медицина и фармацевтика",
+            "Торговля и e-commerce",
+            "Строительство и недвижимость",
+            "Производство",
+            "Транспорт и логистика",
+            "Маркетинг и реклама",
+            "HR и рекрутинг",
+            "Сфера услуг",
+            "Искусство и медиа",
+            "Госслужба",
+            "Наука и исследования",
+            "Сельское хозяйство",
+            "Ресторанный бизнес",
+            "Туризм",
+            "Другое"
+    );
 
     private WorkerDto.Response toWorkerResponse(WorkerProfile p) {
         WorkerDto.Response r = new WorkerDto.Response();
@@ -236,22 +311,7 @@ public class ProfileService {
         r.setIsOpenToWork(p.getIsOpenToWork());
         r.setJobSearchStatus(p.getJobSearchStatus());
         r.setAvailableFrom(p.getAvailableFrom());
-        // Автоподсчёт опыта по датам из опыта работы
-        if (p.getExperiences() != null && !p.getExperiences().isEmpty()) {
-            int totalMonths = p.getExperiences().stream().mapToInt(exp -> {
-                java.time.LocalDate start = exp.getStartDate();
-                java.time.LocalDate end = Boolean.TRUE.equals(exp.getIsCurrent()) ?
-                        java.time.LocalDate.now() : (exp.getEndDate() != null ? exp.getEndDate() : java.time.LocalDate.now());
-                if (start == null) return 0;
-                return (int) java.time.temporal.ChronoUnit.MONTHS.between(start, end);
-            }).sum();
-            r.setExperienceYears(totalMonths / 12);
-            // Обновляем в базе
-            p.setExperienceYears(totalMonths / 12);
-        } else {
-            r.setExperienceYears(0);
-            p.setExperienceYears(0);
-        }
+        r.setExperienceYears(p.getExperienceYears() != null ? p.getExperienceYears() : 0);
         r.setUser(UserDto.from(p.getUser()));
         if (p.getSkills() != null)
             r.setSkills(p.getSkills().stream().map(WorkerSkill::getSkillName).collect(Collectors.toList()));

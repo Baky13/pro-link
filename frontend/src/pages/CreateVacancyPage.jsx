@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import { Plus, Trash2 } from 'lucide-react'
 
 const EMPLOYMENT_TYPES = ['FULL_TIME', 'PART_TIME', 'REMOTE', 'FREELANCE', 'INTERNSHIP']
+const CITIES = ['Бишкек', 'Ош', 'Манас', 'Ыссык-Куль', 'Нарын', 'Талас', 'Баткен', 'Удалённо']
 
 const err = (color) => ({ borderColor: color ? 'var(--danger)' : undefined })
 
@@ -180,7 +181,9 @@ export default function CreateVacancyPage() {
               </div>
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>{t.city}</label>
-                <input className="input" value={form.city} onChange={e => set('city', e.target.value)} />
+                <select className="input" value={form.city} onChange={e => set('city', e.target.value)}>
+                  {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
               </div>
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>{t.responseDays}</label>
@@ -212,14 +215,14 @@ export default function CreateVacancyPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 120px', gap: 14 }}>
             <div>
               <label style={{ fontSize: 13, fontWeight: 600, color: errors.salaryFrom ? 'var(--danger)' : 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>{t.salaryFrom}</label>
-              <input className="input" type="number" value={form.salaryFrom}
+              <input className="input" type="number" min={0} step={1000} value={form.salaryFrom}
                 onChange={e => { set('salaryFrom', e.target.value); clearError('salaryFrom') }}
                 placeholder="50000" style={err(errors.salaryFrom)} />
               {errors.salaryFrom && <span style={{ fontSize: 12, color: 'var(--danger)' }}>{t.specifySalary}</span>}
             </div>
             <div>
               <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>{t.salaryTo}</label>
-              <input className="input" type="number" value={form.salaryTo} onChange={e => set('salaryTo', e.target.value)} placeholder="100000" />
+              <input className="input" type="number" min={0} step={1000} value={form.salaryTo} onChange={e => set('salaryTo', e.target.value)} placeholder="100000" />
             </div>
             <div>
               <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>{t.currency}</label>

@@ -4,6 +4,7 @@ import com.prolink.dto.EmployerDto;
 import com.prolink.dto.WorkerDto;
 import com.prolink.entity.User;
 import com.prolink.service.ProfileService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,7 +43,10 @@ public class ProfileController {
 
     @PutMapping("/worker/profile")
     public WorkerDto.Response updateWorkerProfile(@AuthenticationPrincipal User user,
-                                                   @RequestBody WorkerDto.Request request) {
+                                                   @Valid @RequestBody WorkerDto.Request request) {
+        if (user.getRole() != User.Role.WORKER) {
+            throw new com.prolink.exception.BadRequestException("Only WORKER can update worker profile");
+        }
         return profileService.updateWorkerProfile(user.getId(), request);
     }
 
@@ -66,7 +70,10 @@ public class ProfileController {
 
     @PutMapping("/employer/profile")
     public EmployerDto.Response updateEmployerProfile(@AuthenticationPrincipal User user,
-                                                       @RequestBody EmployerDto.Request request) {
+                                                       @Valid @RequestBody EmployerDto.Request request) {
+        if (user.getRole() != User.Role.EMPLOYER) {
+            throw new com.prolink.exception.BadRequestException("Only EMPLOYER can update employer profile");
+        }
         return profileService.updateEmployerProfile(user.getId(), request);
     }
 
@@ -88,5 +95,12 @@ public class ProfileController {
                                               @RequestParam("file") MultipartFile file,
                                               @AuthenticationPrincipal User user) throws Exception {
         return ResponseEntity.ok(profileService.uploadFile(user.getId(), file, type));
+    }
+
+    @DeleteMapping("/upload/{type}")
+    public ResponseEntity<Void> deleteUpload(@PathVariable String type,
+                                             @AuthenticationPrincipal User user) {
+        profileService.deleteUpload(user.getId(), type);
+        return ResponseEntity.noContent().build();
     }
 }

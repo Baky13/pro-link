@@ -1,7 +1,8 @@
 package com.prolink.controller;
 
+import com.prolink.dto.AuthDto;
 import com.prolink.service.PasswordResetService;
-import lombok.Data;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,20 +15,14 @@ public class PasswordResetController {
     private final PasswordResetService passwordResetService;
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@RequestBody EmailRequest request) {
+    public ResponseEntity<String> forgotPassword(@Valid @RequestBody AuthDto.ForgotPasswordRequest request) {
         passwordResetService.sendResetEmail(request.getEmail());
         return ResponseEntity.ok("Код отправлен на email");
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(@RequestBody ResetRequest request) {
+    public ResponseEntity<String> resetPassword(@Valid @RequestBody AuthDto.ResetPasswordRequest request) {
         passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
         return ResponseEntity.ok("Пароль изменён");
     }
-
-    @Data
-    static class EmailRequest { private String email; }
-
-    @Data
-    static class ResetRequest { private String token; private String newPassword; }
 }

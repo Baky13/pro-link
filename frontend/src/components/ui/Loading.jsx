@@ -72,7 +72,7 @@ export function LoadingState({
           justifyContent: 'center',
           marginBottom: 16
         }}>
-          <AlertCircle size={24} color=\"var(--danger)\" />
+          <AlertCircle size={24} color="var(--danger)" />
         </div>
         <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
           Произошла ошибка
@@ -83,7 +83,7 @@ export function LoadingState({
         {onRetry && (
           <button 
             onClick={onRetry}
-            className=\"btn-outline\"
+            className="btn-outline"
             style={{ display: 'flex', alignItems: 'center', gap: 8 }}
           >
             <RefreshCw size={16} />
@@ -129,14 +129,15 @@ export function InlineLoader({ size = 16 }) {
 
 export function PageLoader() {
   return (
-    <div style={{
+    <div role="status" aria-live="polite" style={{
       position: 'fixed',
       top: 0,
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'rgba(248, 249, 255, 0.8)',
+      background: 'color-mix(in srgb, var(--bg) 80%, transparent)',
       backdropFilter: 'blur(4px)',
+      WebkitBackdropFilter: 'blur(4px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -146,7 +147,8 @@ export function PageLoader() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 16
+        gap: 16,
+        color: 'var(--text)'
       }}>
         <LoadingSpinner size={32} />
         <p style={{ color: 'var(--text-secondary)' }}>Загрузка...</p>

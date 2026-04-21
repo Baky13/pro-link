@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import { Plus, Trash2, ArrowLeft } from 'lucide-react'
 
 const EMPLOYMENT_TYPES = ['FULL_TIME', 'PART_TIME', 'REMOTE', 'FREELANCE', 'INTERNSHIP']
+const CITIES = ['Бишкек', 'Ош', 'Манас', 'Ыссык-Куль', 'Нарын', 'Талас', 'Баткен', 'Удалённо']
 const err = (color) => ({ borderColor: color ? 'var(--danger)' : undefined })
 
 export default function EditVacancyPage() {
@@ -186,7 +187,10 @@ export default function EditVacancyPage() {
               </div>
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Город</label>
-                <input className="input" value={form.city} onChange={e => set('city', e.target.value)} />
+                <select className="input" value={form.city} onChange={e => set('city', e.target.value)}>
+                  {!CITIES.includes(form.city) && form.city && <option value={form.city}>{form.city}</option>}
+                  {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
               </div>
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Ответ в течение (дней)</label>
@@ -213,12 +217,12 @@ export default function EditVacancyPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 120px', gap: 14 }}>
             <div>
               <label style={{ fontSize: 13, fontWeight: 600, color: errors.salaryFrom ? 'var(--danger)' : 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>От *</label>
-              <input className="input" type="number" value={form.salaryFrom} onChange={e => { set('salaryFrom', e.target.value); clearError('salaryFrom') }} style={err(errors.salaryFrom)} />
+              <input className="input" type="number" min={0} step={1000} value={form.salaryFrom} onChange={e => { set('salaryFrom', e.target.value); clearError('salaryFrom') }} style={err(errors.salaryFrom)} />
               {errors.salaryFrom && <span style={{ fontSize: 12, color: 'var(--danger)' }}>Укажите зарплату</span>}
             </div>
             <div>
               <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>До</label>
-              <input className="input" type="number" value={form.salaryTo} onChange={e => set('salaryTo', e.target.value)} />
+              <input className="input" type="number" min={0} step={1000} value={form.salaryTo} onChange={e => set('salaryTo', e.target.value)} />
             </div>
             <div>
               <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>Валюта</label>

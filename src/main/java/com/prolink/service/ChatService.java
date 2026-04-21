@@ -38,7 +38,7 @@ public class ChatService {
         Long employerId = application.getVacancy().getEmployer().getUser().getId();
 
         return chatRoomRepository.findByWorkerIdAndEmployerId(workerId, employerId)
-                .map(this::toRoomResponse)
+                .map(room -> toRoomResponse(reopenForUser(room, userId)))
                 .orElseGet(() -> {
                     ChatRoom room = ChatRoom.builder()
                             .application(application)
@@ -64,7 +64,7 @@ public class ChatService {
         }
 
         return chatRoomRepository.findByWorkerIdAndEmployerId(workerId, employerId)
-                .map(this::toRoomResponse)
+                .map(room -> toRoomResponse(reopenForUser(room, currentUserId)))
                 .orElseGet(() -> {
                     ChatRoom room = ChatRoom.builder()
                             .worker(workerId.equals(currentUserId) ? currentUser : targetUser)
@@ -72,6 +72,23 @@ public class ChatService {
                             .build();
                     return toRoomResponse(chatRoomRepository.save(room));
                 });
+    }
+
+    private ChatRoom reopenForUser(ChatRoom room, Long userId) {
+        boolean changed = false;
+        if (room.getWorker().getId().equals(userId) && Boolean.TRUE.equals(room.getDeletedByWorker())) {
+            room.setDeletedByWorker(false);
+            changed = true;
+        }
+        if (room.getEmployer().getId().equals(userId) && Boolean.TRUE.equals(room.getDeletedByEmployer())) {
+            room.setDeletedByEmployer(false);
+            changed = true;
+        }
+        if (Boolean.TRUE.equals(room.getIsArchived())) {
+            room.setIsArchived(false);
+            changed = true;
+        }
+        return changed ? chatRoomRepository.save(room) : room;
     }
 
     public List<ChatDto.RoomResponse> getUserRooms(Long userId) {
@@ -115,11 +132,14 @@ public class ChatService {
         if (!room.getWorker().getId().equals(userId) && !room.getEmployer().getId().equals(userId)) {
             throw new BadRequestException("Not authorized");
         }
-        // Мягкое удаление — только для того кто удалил
+        // Мягкое удаление — скрываем для того кто удалил, и ставим точку отсечки
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
         if (room.getWorker().getId().equals(userId)) {
             room.setDeletedByWorker(true);
+            room.setWorkerClearedAt(now);
         } else {
             room.setDeletedByEmployer(true);
+            room.setEmployerClearedAt(now);
         }
         // Если оба удалили — физически удаляем
         if (Boolean.TRUE.equals(room.getDeletedByWorker()) && Boolean.TRUE.equals(room.getDeletedByEmployer())) {
@@ -137,7 +157,12 @@ public class ChatService {
         }
         chatMessageRepository.markAsRead(roomId, userId);
         notificationService.markChatNotificationsAsRead(userId, roomId);
-        return chatMessageRepository.findByRoomIdOrderByCreatedAtAsc(roomId, pageRequest).map(this::toMessageResponse);
+        java.time.LocalDateTime after = room.getWorker().getId().equals(userId)
+                ? room.getWorkerClearedAt() : room.getEmployerClearedAt();
+        Page<ChatMessage> page = (after == null)
+                ? chatMessageRepository.findByRoomIdOrderByCreatedAtAsc(roomId, pageRequest)
+                : chatMessageRepository.findByRoomIdAndCreatedAtAfterOrderByCreatedAtAsc(roomId, after, pageRequest);
+        return page.map(this::toMessageResponse);
     }
 
     @Transactional

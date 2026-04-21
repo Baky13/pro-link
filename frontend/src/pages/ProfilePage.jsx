@@ -3,8 +3,52 @@ import { profileApi } from '../api'
 import { useAuthStore } from '../store'
 import { useT } from '../utils/i18n'
 import toast from 'react-hot-toast'
-import { User, Briefcase, Globe, Plus, Trash2, Building2 } from 'lucide-react'
+import { User, Briefcase, Globe, Plus, Trash2, Building2, Sparkles, X } from 'lucide-react'
 import ProfileProgress from '../components/ProfileProgress'
+
+const RESUME_EXAMPLE = `Должность: Senior Frontend Developer
+Зарплата: 150000
+Опыт: 5
+О себе: Фронтенд-разработчик с 5 годами опыта. Специализация — React, TypeScript.
+Навыки: React, TypeScript, Redux, Next.js, Node.js, Docker, Git
+GitHub: github.com/ivan-ivanov
+Портфолио: ivanov.dev
+LinkedIn: linkedin.com/in/ivan-ivanov`
+
+const FIELD_MAP = {
+  'должность': 'title', 'позиция': 'title', 'position': 'title',
+  'зарплата': 'expectedSalary', 'salary': 'expectedSalary',
+  'опыт': 'experienceYears', 'experience': 'experienceYears', 'опыт работы': 'experienceYears',
+  'о себе': 'bio', 'bio': 'bio', 'about': 'bio',
+  'навыки': 'skills', 'skills': 'skills',
+  'github': 'githubUrl', 'гитхаб': 'githubUrl',
+  'портфолио': 'portfolioUrl', 'portfolio': 'portfolioUrl',
+  'linkedin': 'linkedinUrl', 'линкедин': 'linkedinUrl',
+}
+
+function parseResume(text) {
+  const result = {}
+  const lines = text.split(/\r?\n/)
+  for (const raw of lines) {
+    const line = raw.trim()
+    if (!line) continue
+    const sep = line.indexOf(':')
+    if (sep < 0) continue
+    const key = line.slice(0, sep).trim().toLowerCase()
+    const val = line.slice(sep + 1).trim()
+    const field = FIELD_MAP[key]
+    if (!field || !val) continue
+    if (field === 'skills') {
+      result.skills = val.split(/[,;]/).map(s => s.trim()).filter(Boolean)
+    } else if (field === 'experienceYears' || field === 'expectedSalary') {
+      const n = parseInt(val.replace(/\D/g, ''), 10)
+      if (!Number.isNaN(n)) result[field] = n
+    } else {
+      result[field] = val
+    }
+  }
+  return result
+}
 
 export default function ProfilePage() {
   const { user } = useAuthStore()
@@ -16,6 +60,20 @@ export default function ProfilePage() {
   const [skillInput, setSkillInput] = useState('')
   const [showExpForm, setShowExpForm] = useState(false)
   const [expForm, setExpForm] = useState({ companyName: '', position: '', description: '', startDate: '', endDate: '', isCurrent: false })
+  const [showParseModal, setShowParseModal] = useState(false)
+  const [parseText, setParseText] = useState('')
+
+  const applyParsedResume = () => {
+    const parsed = parseResume(parseText)
+    if (Object.keys(parsed).length === 0) {
+      toast.error('Не удалось распознать. Используй формат "Ключ: Значение"')
+      return
+    }
+    setForm(f => ({ ...f, ...parsed, skills: parsed.skills?.length ? parsed.skills : (f.skills || []) }))
+    setShowParseModal(false)
+    setParseText('')
+    toast.success(`Заполнено полей: ${Object.keys(parsed).length}. Проверь и сохрани.`)
+  }
 
   useEffect(() => {
     if (!user) return
@@ -38,8 +96,9 @@ export default function ProfilePage() {
       const { data } = await save(form)
       setProfile(data)
       toast.success(t.profileSaved)
-    } catch { toast.error(t.error) }
-    finally { setSaving(false) }
+    } catch (err) {
+      toast.error(err.response?.data?.message || t.error)
+    } finally { setSaving(false) }
   }
 
   const handleFileUpload = async (e, type) => {
@@ -52,7 +111,22 @@ export default function ProfilePage() {
       const fetch = user.role === 'WORKER' ? profileApi.getWorker : profileApi.getEmployer
       const { data } = await fetch()
       setProfile(data)
-    } catch { toast.error(t.error) }
+    } catch (err) {
+      toast.error(err.response?.data?.message || t.error)
+    }
+  }
+
+  const handleFileDelete = async (type, label) => {
+    if (!window.confirm(`Удалить ${label}?`)) return
+    try {
+      await profileApi.deleteFile(type)
+      toast.success('Удалено')
+      const fetch = user.role === 'WORKER' ? profileApi.getWorker : profileApi.getEmployer
+      const { data } = await fetch()
+      setProfile(data)
+    } catch (err) {
+      toast.error(err.response?.data?.message || t.error)
+    }
   }
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
@@ -83,6 +157,57 @@ export default function ProfilePage() {
 
   return (
     <div style={{ maxWidth: 800, margin: '40px auto', padding: '0 20px' }}>
+      {showParseModal && (
+        <div onClick={() => setShowParseModal(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} className="card"
+            style={{ maxWidth: 600, width: '100%', padding: 24, position: 'relative' }}>
+            <button type="button" onClick={() => setShowParseModal(false)}
+              style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: 4 }}>
+              <X size={20} />
+            </button>
+            <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Sparkles size={18} color="var(--primary)" /> Авто-заполнение из резюме
+            </h2>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>
+              Вставь текст в формате "Ключ: Значение". Ключи: Должность, Зарплата, Опыт, О себе, Навыки (через запятую), GitHub, Портфолио, LinkedIn.
+            </p>
+            <textarea value={parseText} onChange={e => setParseText(e.target.value)}
+              placeholder={RESUME_EXAMPLE} rows={12}
+              className="input" style={{ fontFamily: 'monospace', fontSize: 13, resize: 'vertical', minHeight: 240 }} />
+            <div style={{ display: 'flex', gap: 10, marginTop: 14, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <label style={{ padding: '8px 14px', fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 500 }}>
+                📂 Выбрать файл (.txt)
+                <input type="file" accept=".txt,text/plain" style={{ display: 'none' }}
+                  onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    const reader = new FileReader()
+                    reader.onload = () => setParseText(String(reader.result || ''))
+                    reader.onerror = () => toast.error('Не удалось прочитать файл')
+                    reader.readAsText(file, 'utf-8')
+                    e.target.value = ''
+                  }} />
+              </label>
+              <button type="button" className="btn-ghost"
+                onClick={() => setParseText(RESUME_EXAMPLE)}
+                style={{ padding: '8px 14px', fontSize: 13 }}>
+                Вставить пример
+              </button>
+              <button type="button" className="btn-ghost"
+                onClick={() => setShowParseModal(false)}
+                style={{ padding: '8px 14px', fontSize: 13 }}>
+                Отмена
+              </button>
+              <button type="button" className="btn-primary" onClick={applyParsedResume}
+                disabled={!parseText.trim()}
+                style={{ padding: '8px 18px', fontSize: 13 }}>
+                Заполнить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 24 }}>{t.myProfile}</h1>
       <ProfileProgress profile={profile} role={user?.role} />
 
@@ -90,17 +215,19 @@ export default function ProfilePage() {
 
         {/* Avatar / Logo */}
         <div className="card" style={{ padding: 24, display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-          <div>
-            {profile.user?.avatarUrl || profile.logoUrl ? (
-              <img src={profile.user?.avatarUrl || profile.logoUrl} alt=""
-                style={{ width: 80, height: 80, borderRadius: user.role === 'WORKER' ? '50%' : 16, objectFit: 'cover', border: '3px solid var(--primary)' }} />
+          {/* Personal photo — always circle, left */}
+          <div style={{ textAlign: 'center', flexShrink: 0 }}>
+            {profile.user?.avatarUrl ? (
+              <img src={profile.user.avatarUrl} alt="Фото профиля"
+                style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }} />
             ) : (
-              <div style={{ width: 80, height: 80, borderRadius: user.role === 'WORKER' ? '50%' : 16, background: 'linear-gradient(135deg, var(--primary), #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 900, color: 'white' }}>
+              <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 900, color: 'white' }}>
                 {user?.firstName?.[0]?.toUpperCase()}
               </div>
             )}
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>Фото</div>
           </div>
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: 18 }}>{user?.firstName} {user?.lastName}</div>
             <div style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 12 }}>{user?.email}</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -108,20 +235,61 @@ export default function ProfilePage() {
                 <span className="btn-outline" style={{ fontSize: 13, padding: '6px 14px', display: 'inline-block' }}>📷 {t.uploadAvatar}</span>
                 <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleFileUpload(e, 'avatars')} />
               </label>
+              {profile.user?.avatarUrl && (
+                <button type="button" onClick={() => handleFileDelete('avatars', 'фото')}
+                  style={{ fontSize: 13, padding: '6px 14px', border: '1px solid var(--border)', borderRadius: 8, background: 'transparent', color: 'var(--danger)', cursor: 'pointer', fontWeight: 500 }}>
+                  🗑 Удалить фото
+                </button>
+              )}
               {user.role === 'WORKER' && (
-                <label style={{ cursor: 'pointer' }}>
-                  <span className="btn-ghost" style={{ fontSize: 13, padding: '6px 14px', display: 'inline-block', border: '1px solid var(--border)', borderRadius: 8 }}>📄 {t.uploadResume}</span>
-                  <input type="file" accept=".pdf,.doc,.docx" style={{ display: 'none' }} onChange={e => handleFileUpload(e, 'resumes')} />
-                </label>
+                <>
+                  <label style={{ cursor: 'pointer' }}>
+                    <span className="btn-ghost" style={{ fontSize: 13, padding: '6px 14px', display: 'inline-block', border: '1px solid var(--border)', borderRadius: 8 }}>📄 {t.uploadResume}</span>
+                    <input type="file" accept=".pdf,.doc,.docx" style={{ display: 'none' }} onChange={e => handleFileUpload(e, 'resumes')} />
+                  </label>
+                  {profile.resumeUrl && (
+                    <button type="button" onClick={() => handleFileDelete('resumes', 'резюме')}
+                      style={{ fontSize: 13, padding: '6px 14px', border: '1px solid var(--border)', borderRadius: 8, background: 'transparent', color: 'var(--danger)', cursor: 'pointer', fontWeight: 500 }}>
+                      🗑 Удалить резюме
+                    </button>
+                  )}
+                  <button type="button" onClick={() => setShowParseModal(true)}
+                    style={{ fontSize: 13, padding: '6px 14px', borderRadius: 8, background: 'var(--primary-light)', color: 'var(--primary)', border: '1px solid var(--primary)', cursor: 'pointer', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <Sparkles size={14} /> Авто-заполнить
+                  </button>
+                </>
               )}
               {user.role === 'EMPLOYER' && (
-                <label style={{ cursor: 'pointer' }}>
-                  <span className="btn-ghost" style={{ fontSize: 13, padding: '6px 14px', display: 'inline-block', border: '1px solid var(--border)', borderRadius: 8 }}>🏢 {t.uploadLogo}</span>
-                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleFileUpload(e, 'logos')} />
-                </label>
+                <>
+                  <label style={{ cursor: 'pointer' }}>
+                    <span className="btn-ghost" style={{ fontSize: 13, padding: '6px 14px', display: 'inline-block', border: '1px solid var(--border)', borderRadius: 8 }}>🏢 {t.uploadLogo}</span>
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleFileUpload(e, 'logos')} />
+                  </label>
+                  {profile.logoUrl && (
+                    <button type="button" onClick={() => handleFileDelete('logos', 'логотип')}
+                      style={{ fontSize: 13, padding: '6px 14px', border: '1px solid var(--border)', borderRadius: 8, background: 'transparent', color: 'var(--danger)', cursor: 'pointer', fontWeight: 500 }}>
+                      🗑 Удалить логотип
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
+
+          {/* Company logo — right side, only for EMPLOYER */}
+          {user.role === 'EMPLOYER' && (
+            <div style={{ textAlign: 'center', flexShrink: 0, marginLeft: 'auto' }}>
+              {profile.logoUrl ? (
+                <img src={profile.logoUrl} alt="Логотип компании"
+                  style={{ width: 80, height: 80, borderRadius: 16, objectFit: 'cover', border: '1px solid var(--border)' }} />
+              ) : (
+                <div style={{ width: 80, height: 80, borderRadius: 16, background: 'var(--bg-secondary)', border: '1px dashed var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, color: 'var(--text-secondary)' }}>
+                  🏢
+                </div>
+              )}
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>Логотип</div>
+            </div>
+          )}
         </div>
 
         {/* Worker form */}
@@ -148,8 +316,14 @@ export default function ProfilePage() {
                     <option value="NOT_LOOKING">{t.NOT_LOOKING}</option>
                   </select>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', padding: '10px 14px', borderRadius: 8, background: 'var(--primary-light)', border: '1px solid var(--primary)', fontSize: 13, color: 'var(--primary)', fontWeight: 600 }}>
-                  💼 Опыт: {profile.experienceYears || 0} лет (считается автоматически)
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
+                    💼 Опыт работы (лет)
+                  </label>
+                  <input className="input" type="number" min={0} max={80}
+                    value={form.experienceYears ?? 0}
+                    onChange={e => set('experienceYears', e.target.value === '' ? 0 : Number(e.target.value))}
+                    placeholder="0" />
                 </div>
               </div>
               <div style={{ marginTop: 16 }}>
@@ -286,7 +460,29 @@ export default function ProfilePage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div>
                   <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>{t.industry}</label>
-                  <input className="input" value={form.industry || ''} onChange={e => set('industry', e.target.value)} placeholder={t.industryPlaceholder} />
+                  <select className="input" value={form.industry || ''} onChange={e => set('industry', e.target.value)}>
+                    <option value="">{t.industryPlaceholder || 'Выберите отрасль'}</option>
+                    {[
+                      'IT и разработка',
+                      'Финансы и банки',
+                      'Образование',
+                      'Медицина и фармацевтика',
+                      'Торговля и e-commerce',
+                      'Строительство и недвижимость',
+                      'Производство',
+                      'Транспорт и логистика',
+                      'Маркетинг и реклама',
+                      'HR и рекрутинг',
+                      'Сфера услуг',
+                      'Искусство и медиа',
+                      'Госслужба',
+                      'Наука и исследования',
+                      'Сельское хозяйство',
+                      'Ресторанный бизнес',
+                      'Туризм',
+                      'Другое',
+                    ].map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
                 </div>
                 <div>
                   <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>{t.companySize}</label>

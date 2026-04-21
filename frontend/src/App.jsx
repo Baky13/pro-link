@@ -7,6 +7,7 @@ import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import PageTransition from './components/PageTransition'
 import { RequireAuth, RequireRole } from './components/RequireAuth'
+import ErrorBoundary from './components/ErrorBoundary'
 
 import HomePage from './pages/HomePage'
 import VacanciesPage from './pages/VacanciesPage'
@@ -31,8 +32,42 @@ import CompaniesPage from './pages/CompaniesPage'
 import EmployerDashboard from './pages/EmployerDashboard'
 import NotFoundPage from './pages/NotFoundPage'
 
+const TITLES = [
+  [/^\/$/, 'Главная'],
+  [/^\/vacancies\/create$/, 'Создать вакансию'],
+  [/^\/vacancies\/\d+\/edit$/, 'Редактировать вакансию'],
+  [/^\/vacancies\/\d+\/applications$/, 'Отклики на вакансию'],
+  [/^\/vacancies\/\d+$/, 'Вакансия'],
+  [/^\/vacancies$/, 'Вакансии'],
+  [/^\/my-vacancies$/, 'Мои вакансии'],
+  [/^\/saved$/, 'Сохранённые'],
+  [/^\/applications$/, 'Мои отклики'],
+  [/^\/map$/, 'Карта вакансий'],
+  [/^\/workers\/\d+$/, 'Профиль соискателя'],
+  [/^\/workers$/, 'Соискатели'],
+  [/^\/employers\/\d+$/, 'Профиль компании'],
+  [/^\/companies$/, 'Компании'],
+  [/^\/dashboard$/, 'Дашборд'],
+  [/^\/chat\/\d+$/, 'Чат'],
+  [/^\/chat$/, 'Чаты'],
+  [/^\/profile$/, 'Мой профиль'],
+  [/^\/notifications$/, 'Уведомления'],
+  [/^\/login$/, 'Вход'],
+  [/^\/register$/, 'Регистрация'],
+  [/^\/forgot-password$/, 'Восстановление пароля'],
+  [/^\/verify-email$/, 'Подтверждение email'],
+]
+
+function resolveTitle(pathname) {
+  for (const [re, title] of TITLES) if (re.test(pathname)) return title
+  return 'Страница не найдена'
+}
+
 function AnimatedRoutes() {
   const location = useLocation()
+  useEffect(() => {
+    document.title = resolveTitle(location.pathname) + ' — ProLink'
+  }, [location.pathname])
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
@@ -78,6 +113,7 @@ export default function App() {
   useEffect(() => { init() }, [])
 
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <Navbar />
       <AnimatedRoutes />
@@ -128,5 +164,6 @@ export default function App() {
         }}
       />
     </BrowserRouter>
+    </ErrorBoundary>
   )
 }

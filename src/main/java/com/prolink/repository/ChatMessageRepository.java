@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
     Page<ChatMessage> findByRoomIdOrderByCreatedAtAsc(Long roomId, Pageable pageable);
 
+    Page<ChatMessage> findByRoomIdAndCreatedAtAfterOrderByCreatedAtAsc(Long roomId, java.time.LocalDateTime after, Pageable pageable);
+
     @Modifying
     @Transactional
     @Query("UPDATE ChatMessage m SET m.isRead = true WHERE m.room.id = :roomId AND m.sender.id != :userId")

@@ -1,0 +1,8 @@
+Должность: Senior Frontend Developer
+Зарплата: 150000
+Опыт: 5
+О себе: Фронтенд-разработчик с 5 годами опыта. Специализация — React, TypeScript. Собирал высоконагруженные SPA и дизайн-системы. Работал с командами 5-20 человек, внедрял тесты и CI/CD.
+Навыки: React, TypeScript, Redux, Zustand, Next.js, GraphQL, Node.js, Docker, Git, Figma
+GitHub: github.com/ivan-ivanov
+Портфолио: ivanov.dev
+LinkedIn: linkedin.com/in/ivan-ivanov

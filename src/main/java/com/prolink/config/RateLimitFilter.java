@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+    private final Map<String, Bucket> sensitiveBuckets = new ConcurrentHashMap<>();
 
     private Bucket createBucket() {
         Bandwidth limit = Bandwidth.builder()
@@ -30,21 +31,45 @@ public class RateLimitFilter extends OncePerRequestFilter {
         return Bucket.builder().addLimit(limit).build();
     }
 
+    private Bucket createSensitiveBucket() {
+        Bandwidth limit = Bandwidth.builder()
+                .capacity(3)
+                .refillGreedy(3, Duration.ofMinutes(15))
+                .build();
+        return Bucket.builder().addLimit(limit).build();
+    }
+
+    private boolean isSensitive(String uri) {
+        return uri.startsWith("/api/auth/forgot-password")
+                || uri.startsWith("/api/auth/reset-password")
+                || uri.startsWith("/api/auth/resend-verification");
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String uri = request.getRequestURI();
+        String ip = getClientIp(request);
 
-        if (uri.startsWith("/api/auth/login") || uri.startsWith("/api/auth/register")) {
-            String ip = getClientIp(request);
+        if (isSensitive(uri)) {
+            String key = ip + "|" + uri;
+            Bucket bucket = sensitiveBuckets.computeIfAbsent(key, k -> createSensitiveBucket());
+            if (!bucket.tryConsume(1)) {
+                log.warn("Sensitive rate limit exceeded for IP: {} on {}", ip, uri);
+                response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"message\":\"Слишком много попыток. Попробуйте позже.\"}");
+                return;
+            }
+        } else if (uri.startsWith("/api/auth/login") || uri.startsWith("/api/auth/register")) {
             Bucket bucket = buckets.computeIfAbsent(ip, k -> createBucket());
 
             if (!bucket.tryConsume(1)) {
                 log.warn("Rate limit exceeded for IP: {} on {}", ip, uri);
                 response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
                 response.setContentType("application/json;charset=UTF-8");
-                response.getWriter().write("{\"message\":\"\u0421\u043b\u0438\u0448\u043a\u043e\u043c \u043c\u043d\u043e\u0433\u043e \u0437\u0430\u043f\u0440\u043e\u0441\u043e\u0432. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0447\u0435\u0440\u0435\u0437 \u043c\u0438\u043d\u0443\u0442\u0443.\"}");
+                response.getWriter().write("{\"message\":\"Слишком много запросов. Попробуйте через минуту.\"}");
                 return;
             }
         }

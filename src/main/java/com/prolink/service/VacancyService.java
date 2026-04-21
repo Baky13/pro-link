@@ -226,6 +226,9 @@ public class VacancyService {
             emp.setRating(v.getEmployer().getRating());
             emp.setIsVerified(v.getEmployer().getIsVerified());
             r.setEmployer(emp);
+            if (v.getEmployer().getUser() != null) {
+                r.setEmployerUserId(v.getEmployer().getUser().getId());
+            }
         }
         return r;
     }
