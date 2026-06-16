@@ -11,7 +11,7 @@ public interface EmployerProfileRepository extends JpaRepository<EmployerProfile
     Optional<EmployerProfile> findByUserId(Long userId);
 
     @Query("SELECT e FROM EmployerProfile e WHERE " +
-           "(:search IS NULL OR LOWER(e.companyName) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
-           "(:industry IS NULL OR LOWER(e.industry) LIKE LOWER(CONCAT('%', :industry, '%')))")
+           "(:search IS NULL OR :search = '' OR LOWER(e.companyName) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+           "(:industry IS NULL OR :industry = '' OR LOWER(e.industry) LIKE LOWER(CONCAT('%', :industry, '%')))")
     Page<EmployerProfile> searchEmployers(String search, String industry, Pageable pageable);
 }
