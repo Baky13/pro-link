@@ -95,16 +95,18 @@ export default function WorkerProfilePage() {
       </div>
 
       {/* Резюме (важно для работодателя) */}
-      {profile.resumeUrl && (
-        <div className="card" style={{ padding: 24, marginBottom: 16 }}>
-          <h3 style={{ fontWeight: 700, marginBottom: 12 }}>Резюме</h3>
+      <div className="card" style={{ padding: 24, marginBottom: 16 }}>
+        <h3 style={{ fontWeight: 700, marginBottom: 12 }}>Резюме</h3>
+        {profile.resumeUrl ? (
           <a href={profile.resumeUrl} target="_blank" rel="noreferrer"
             className="btn-outline"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', textDecoration: 'none', fontWeight: 600 }}>
             📄 Открыть / скачать резюме
           </a>
-        </div>
-      )}
+        ) : (
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Резюме не приложено</p>
+        )}
+      </div>
 
       {/* Bio */}
       {profile.bio && (
