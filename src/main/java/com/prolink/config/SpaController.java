@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class SpaController {
 
     @RequestMapping(value = {
-        "/", "/login", "/register", "/forgot-password",
+        "/", "/login", "/register", "/forgot-password", "/verify-email",
         "/vacancies", "/vacancies/**",
-        "/employers/**", "/workers", "/workers/**",
+        "/employers/**", "/workers", "/workers/**", "/companies",
         "/profile", "/applications",
         "/chat", "/chat/**",
         "/notifications", "/my-vacancies",
