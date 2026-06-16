@@ -43,9 +43,12 @@ public class MatchQueryService {
                 .orElseThrow(() -> new BadRequestException("Worker profile not found"));
 
         List<Vacancy> active = vacancyRepository.findByIsActiveTrue(PageRequest.of(0, 100)).getContent();
+        // score считаем ОДИН раз на вакансию (иначе Comparator пересчитывал бы его O(n log n) раз)
         List<Vacancy> top = active.stream()
-                .sorted(Comparator.comparingInt((Vacancy v) -> matchingService.compute(worker, v).score()).reversed())
+                .map(v -> java.util.Map.entry(v, matchingService.compute(worker, v).score()))
+                .sorted(java.util.Map.Entry.<Vacancy, Integer>comparingByValue().reversed())
                 .limit(Math.max(1, limit))
+                .map(java.util.Map.Entry::getKey)
                 .collect(Collectors.toList());
 
         List<MatchDto.VacancyMatch> result = new ArrayList<>();
