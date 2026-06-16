@@ -91,12 +91,6 @@ export default function HomePage() {
         ))}
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 760, margin: '0 auto' }}>
-          {/* Badge */}
-          <motion.div {...fadeUp(0)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', borderRadius: 20, padding: '6px 16px', marginBottom: 24, fontSize: 13, color: 'white', fontWeight: 600, border: '1px solid rgba(255,255,255,0.2)' }}>
-            <span className="pulse" style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }} />
-            Платформа №1 в Кыргызстане
-          </motion.div>
-
           {/* Title */}
           <motion.h1 {...fadeUp(0.1)} style={{ fontSize: 'clamp(30px, 5.5vw, 60px)', fontWeight: 900, color: 'white', marginBottom: 20, lineHeight: 1.1, letterSpacing: -1.5 }}>
             Найди работу{' '}
