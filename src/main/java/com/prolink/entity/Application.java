@@ -34,5 +34,19 @@ public class Application {
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    // --- Кэш ИИ-матчинга (заполняется лениво AiMatchService) ---
+    private Integer matchScore;
+
+    @Column(columnDefinition = "TEXT")
+    private String matchSummary;
+
+    @Column(columnDefinition = "TEXT")
+    private String matchExplanation;
+
+    @Column(columnDefinition = "TEXT")
+    private String matchAdvice;
+
+    private LocalDateTime matchComputedAt;
+
     public enum Status { PENDING, VIEWED, INVITED, REJECTED }
 }

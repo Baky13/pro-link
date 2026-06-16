@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, MapPin, Zap, Flame, ArrowRight } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { vacancyApi, categoryApi } from '../api'
+import { vacancyApi, categoryApi, matchApi } from '../api'
 
 import { useT } from '../utils/i18n'
+import { useAuthStore } from '../store'
 import VacancyCard from '../components/ui/VacancyCard'
 import { SkeletonCard } from '../components/ui/Skeleton'
 
@@ -26,8 +27,10 @@ const itemVariant = {
 export default function HomePage() {
     const t = useT()
   const navigate = useNavigate()
+  const { user } = useAuthStore()
   const [search, setSearch] = useState('')
   const [city, setCity] = useState('')
+  const [recommendations, setRecommendations] = useState([])
   const [hotVacancies, setHotVacancies] = useState([])
   const [urgentVacancies, setUrgentVacancies] = useState([])
   const [categories, setCategories] = useState([])
@@ -48,6 +51,13 @@ export default function HomePage() {
     }).finally(() => setLoading(false))
   }, [])
 
+  // ИИ-рекомендации (только для соискателя)
+  useEffect(() => {
+    if (user?.role === 'WORKER') {
+      matchApi.recommendations(6).then(r => setRecommendations(r.data || [])).catch(() => {})
+    }
+  }, [user?.role])
+
   const handleSearch = e => {
     e.preventDefault()
     const params = new URLSearchParams()
@@ -56,13 +66,11 @@ export default function HomePage() {
     navigate(`/vacancies?${params}`)
   }
 
-  const stats = []
-
   return (
     <div>
       {/* ── Hero ── */}
       <div style={{
-        background: 'linear-gradient(135deg, #5b5ef4 0%, #8b5cf6 55%, #ec4899 100%)',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e4fd6 65%, #2563eb 100%)',
         padding: 'clamp(60px, 10vw, 100px) 20px 80px',
         textAlign: 'center',
         position: 'relative',
@@ -92,7 +100,7 @@ export default function HomePage() {
           {/* Title */}
           <motion.h1 {...fadeUp(0.1)} style={{ fontSize: 'clamp(30px, 5.5vw, 60px)', fontWeight: 900, color: 'white', marginBottom: 20, lineHeight: 1.1, letterSpacing: -1.5 }}>
             Найди работу{' '}
-            <span style={{ background: 'linear-gradient(90deg, #fde68a, #fbbf24)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>мечты</span>
+            <span style={{ color: '#fcd34d' }}>мечты</span>
             <br />в Кыргызстане
           </motion.h1>
 
@@ -118,11 +126,11 @@ export default function HomePage() {
                 style={{ border: 'none', outline: 'none', fontSize: 15, width: '100%', background: 'transparent', color: '#111' }} />
             </div>
             <button type="submit" style={{
-              background: 'linear-gradient(135deg, #5b5ef4, #8b5cf6)',
+              background: 'linear-gradient(135deg, #1e4fd6, #2563eb)',
               color: 'white', border: 'none', borderRadius: 12,
               padding: '12px 28px', fontWeight: 700, fontSize: 15,
               cursor: 'pointer', whiteSpace: 'nowrap',
-              boxShadow: '0 4px 12px rgba(91,94,244,0.4)',
+              boxShadow: '0 4px 12px rgba(30,79,214,0.4)',
               transition: 'opacity 0.15s, transform 0.1s',
               flex: '0 0 auto',
             }}
@@ -150,6 +158,27 @@ export default function HomePage() {
 
       {/* ── Content ── */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: 'clamp(32px, 5vw, 56px) 20px' }}>
+
+        {/* ИИ-рекомендации (для соискателя) — фича-отличие ProLink */}
+        {user?.role === 'WORKER' && recommendations.length > 0 && (
+          <motion.section initial="initial" animate="animate" variants={stagger} style={{ marginBottom: 64 }}>
+            <motion.div variants={itemVariant} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <h2 style={{ fontSize: 'clamp(18px, 3vw, 24px)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  ✨ Рекомендовано вам ИИ
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Подобрано по вашим навыкам и опыту — умный подбор ProLink</p>
+              </div>
+            </motion.div>
+            <div className="vacancy-grid">
+              {recommendations.map(rec => (
+                <motion.div key={rec.vacancy.id} variants={itemVariant}>
+                  <VacancyCard vacancy={rec.vacancy} matchScore={rec.matchScore} />
+                </motion.div>
+              ))}
+            </div>
+          </motion.section>
+        )}
 
         {/* How it works */}
         <section style={{ marginBottom: 64, textAlign: 'center' }}>

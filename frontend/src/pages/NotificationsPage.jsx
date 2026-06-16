@@ -55,12 +55,11 @@ export default function NotificationsPage() {
           ))
           for (let i = 0; i < chatUnreadCount; i++) decrement()
         } else {
-          // Помечаем одно уведомление на сервере
+          // В API нет пометки одного уведомления — markAllRead помечает все.
+          // Приводим UI в соответствие с сервером: все прочитаны, счётчик в ноль.
           await notificationApi.markAllRead()
-          setNotifications(prev => prev.map(item =>
-            item.id === n.id ? { ...item, isRead: true } : item
-          ))
-          decrement()
+          setNotifications(prev => prev.map(item => ({ ...item, isRead: true })))
+          reset()
         }
       } catch {
         setNotifications(prev => prev.map(item =>

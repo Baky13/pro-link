@@ -25,6 +25,7 @@ public class ApplicationService {
     private final WorkerProfileRepository workerProfileRepository;
     private final NotificationService notificationService;
     private final VacancyService vacancyService;
+    private final ProfileService profileService;
 
     @Transactional
     public ApplicationDto.Response apply(ApplicationDto.Request request, Long userId) {
@@ -175,6 +176,7 @@ public class ApplicationService {
         ApplicationDto.Response r = new ApplicationDto.Response();
         r.setId(a.getId());
         r.setVacancy(vacancyService.toResponse(a.getVacancy()));
+        if (a.getWorker() != null) r.setWorker(profileService.toWorkerResponse(a.getWorker()));
         r.setCoverLetter(a.getCoverLetter());
         r.setStatus(a.getStatus());
         r.setCreatedAt(a.getCreatedAt());

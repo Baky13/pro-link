@@ -59,10 +59,10 @@ export default function VacancyMapPage() {
                 <div style={{ minWidth: 200 }}>
                   <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>{v.title}</p>
                   <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 4 }}>{v.employer?.companyName}</p>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: '#5b5ef4', marginBottom: 8 }}>{formatSalary(v)}</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#1e4fd6', marginBottom: 8 }}>{formatSalary(v)}</p>
                   <button
                     onClick={() => navigate(`/vacancies/${v.id}`)}
-                    style={{ background: '#5b5ef4', color: 'white', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', width: '100%' }}>
+                    style={{ background: '#1e4fd6', color: 'white', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', width: '100%' }}>
                     Подробнее
                   </button>
                 </div>

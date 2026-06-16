@@ -6,10 +6,11 @@ import { useT } from '../../utils/i18n'
 import { useState } from 'react'
 import { vacancyApi } from '../../api'
 import Avatar from './Avatar'
+import MatchBadge from './MatchBadge'
 
-export default function VacancyCard({ vacancy, onSaveToggle }) {
+export default function VacancyCard({ vacancy, onSaveToggle, matchScore, defaultSaved = false }) {
     const t = useT()
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useState(defaultSaved)
   const [saving, setSaving] = useState(false)
 
   const handleSave = async e => {
@@ -47,6 +48,7 @@ export default function VacancyCard({ vacancy, onSaveToggle }) {
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* Badges */}
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+              {matchScore != null && <MatchBadge score={matchScore} showLabel={false} size={11} />}
               {vacancy.isHot && (
                 <motion.span initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="badge badge-hot">
                   Горячая
@@ -95,7 +97,7 @@ export default function VacancyCard({ vacancy, onSaveToggle }) {
         </div>
 
         {/* Salary */}
-        <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 12, background: 'var(--primary-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+        <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 12, color: 'var(--text)', letterSpacing: '-0.02em' }}>
           {formatSalary()}
         </div>
 

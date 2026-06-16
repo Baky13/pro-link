@@ -46,7 +46,7 @@ export default function SavedVacanciesPage() {
       ) : (
         <div className="vacancy-grid">
           {vacancies.map(v => (
-            <VacancyCard key={v.id} vacancy={v} onSaveToggle={handleUnsave} />
+            <VacancyCard key={v.id} vacancy={v} onSaveToggle={handleUnsave} defaultSaved />
           ))}
         </div>
       )}

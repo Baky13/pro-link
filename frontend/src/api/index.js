@@ -80,6 +80,13 @@ export const categoryApi = {
   getAll: () => api.get('/categories'),
 }
 
+// AI-матчинг (фича-отличие от HeadHunter)
+export const matchApi = {
+  recommendations: (limit = 6) => api.get('/match/recommendations', { params: { limit } }),
+  forVacancy: id => api.get(`/match/vacancy/${id}`),
+  applicants: vacancyId => api.get(`/match/applications/${vacancyId}`),
+}
+
 // Notifications
 export const notificationApi = {
   getAll: params => api.get('/notifications', { params }),

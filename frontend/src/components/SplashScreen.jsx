@@ -21,7 +21,7 @@ export default function SplashScreen({ onDone }) {
           transition={{ duration: 0.5, ease: 'easeInOut' }}
           style={{
             position: 'fixed', inset: 0, zIndex: 9999,
-            background: 'linear-gradient(135deg, #5b5ef4 0%, #8b5cf6 55%, #ec4899 100%)',
+            background: 'linear-gradient(135deg, #1e4fd6 0%, #2563eb 55%, #2563eb 100%)',
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
             gap: 24,

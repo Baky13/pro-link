@@ -43,7 +43,7 @@ function WorkerCard({ worker }) {
             <img src={worker.user.avatarUrl} alt=""
               style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }} />
           ) : (
-            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #5b5ef4, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 800, color: 'white' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #1e4fd6, #2563eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 800, color: 'white' }}>
               {worker.user?.firstName?.[0]?.toUpperCase()}
             </div>
           )}

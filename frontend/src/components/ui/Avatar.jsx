@@ -13,7 +13,7 @@ export default function Avatar({ src, name = '', size = 40, square = false, styl
     return (
       <div style={{
         width: size, height: size, borderRadius: radius,
-        background: bg || 'linear-gradient(135deg, var(--primary), #8b5cf6)',
+        background: bg || 'linear-gradient(135deg, var(--primary), #2563eb)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontWeight: 700, fontSize, color: 'white',
         flexShrink: 0, userSelect: 'none',

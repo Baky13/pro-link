@@ -25,10 +25,10 @@ export default function EmployerDashboard() {
   const activeVacancies = vacancies.filter(v => v.isActive).length
 
   const stats = [
-    { icon: <Briefcase size={22} />, value: activeVacancies, label: 'Активных вакансий', color: '#5b5ef4', bg: '#eeeeff' },
+    { icon: <Briefcase size={22} />, value: activeVacancies, label: 'Активных вакансий', color: '#1e4fd6', bg: '#e8eefc' },
     { icon: <Users size={22} />, value: totalApplicants, label: 'Всего откликов', color: '#10b981', bg: '#d1fae5' },
     { icon: <Eye size={22} />, value: totalViews, label: 'Просмотров', color: '#f59e0b', bg: '#fef3c7' },
-    { icon: <TrendingUp size={22} />, value: vacancies.length, label: 'Всего вакансий', color: '#8b5cf6', bg: '#ede9fe' },
+    { icon: <TrendingUp size={22} />, value: vacancies.length, label: 'Всего вакансий', color: '#2563eb', bg: '#e8eefc' },
   ]
 
   if (loading) return (

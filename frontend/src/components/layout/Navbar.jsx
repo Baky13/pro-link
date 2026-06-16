@@ -120,7 +120,7 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to="/" style={{ fontWeight: 900, fontSize: 22, marginRight: 20, letterSpacing: -0.5, display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-            <span style={{ background: 'linear-gradient(135deg, #5b5ef4, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Pro</span>
+            <span style={{ background: 'linear-gradient(135deg, #1e4fd6, #2563eb)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Pro</span>
             <span style={{ color: 'var(--text)' }}>Link</span>
           </Link>
 
@@ -184,7 +184,7 @@ export default function Navbar() {
                     aria-haspopup="menu"
                     aria-expanded={menuOpen}
                     style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px 5px 5px', borderRadius: 10, border: '1px solid var(--border)', background: menuOpen ? 'var(--bg-secondary)' : 'transparent', cursor: 'pointer', transition: 'all 0.15s', minHeight: 40 }}>
-                    <div style={{ width: 30, height: 30, borderRadius: 8, background: 'linear-gradient(135deg, #5b5ef4, #8b5cf6)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13, flexShrink: 0 }}>
+                    <div style={{ width: 30, height: 30, borderRadius: 8, background: 'linear-gradient(135deg, #1e4fd6, #2563eb)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13, flexShrink: 0 }}>
                       {user.firstName?.[0]?.toUpperCase()}
                     </div>
                     <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{user.firstName}</span>

@@ -11,7 +11,7 @@ function AuthLayout({ children, title, subtitle }) {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--bg)' }}>
       <div style={{
-        flex: 1, display: 'none', background: 'linear-gradient(135deg, #5b5ef4 0%, #8b5cf6 60%, #ec4899 100%)',
+        flex: 1, display: 'none', background: 'linear-gradient(135deg, #1e4fd6 0%, #2563eb 60%, #2563eb 100%)',
         padding: 48, flexDirection: 'column', justifyContent: 'space-between',
       }} className="auth-left">
         <div style={{ fontWeight: 900, fontSize: 26, color: 'white', letterSpacing: -0.5 }}>ProLink</div>

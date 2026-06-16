@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { MapPin, Clock, Users, Eye, Bookmark, BookmarkCheck, ArrowLeft, ExternalLink, Share2, Edit2 } from 'lucide-react'
+import { MapPin, Clock, Users, Eye, Bookmark, BookmarkCheck, ArrowLeft, ExternalLink, Share2, Edit2, Sparkles } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { vacancyApi, applicationApi, chatApi, profileApi } from '../api'
+import { vacancyApi, applicationApi, chatApi, profileApi, matchApi } from '../api'
 import { useAuthStore } from '../store'
 import { useT } from '../utils/i18n'
 import { SkeletonText } from '../components/ui/Skeleton'
+import MatchBadge from '../components/ui/MatchBadge'
 import toast from 'react-hot-toast'
 
 export default function VacancyDetailPage() {
@@ -23,6 +24,7 @@ export default function VacancyDetailPage() {
   const [coverLetter, setCoverLetter] = useState('')
   const [showApplyForm, setShowApplyForm] = useState(false)
   const [workerProfile, setWorkerProfile] = useState(null)
+  const [match, setMatch] = useState(null)
 
   useEffect(() => {
     vacancyApi.getById(id)
@@ -39,6 +41,8 @@ export default function VacancyDetailPage() {
       }).catch(() => {})
       // Загружаем профиль работника для проверки опыта
       profileApi.getWorker().then(r => setWorkerProfile(r.data)).catch(() => {})
+      // ИИ-совпадение соискателя с этой вакансией
+      matchApi.forVacancy(Number(id)).then(r => setMatch(r.data)).catch(() => {})
     }
   }, [id])
 
@@ -237,6 +241,28 @@ export default function VacancyDetailPage() {
 
         {/* Sidebar */}
         <div style={{ position: 'sticky', top: 84 }}>
+          {/* ИИ-совпадение (для соискателя) */}
+          {user?.role === 'WORKER' && match && (
+            <div className="card" style={{ padding: 20, marginBottom: 16, background: 'rgba(30,79,214,0.05)', border: '1px solid rgba(30,79,214,0.2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 14 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 5, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+                  <Sparkles size={13} /> Подбор ProLink AI
+                </span>
+                <MatchBadge score={match.matchScore} showLabel={false} size={14} />
+              </div>
+              {match.matchExplanation && (
+                <p style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.6, marginBottom: match.matchAdvice ? 12 : 0 }}>
+                  {match.matchExplanation}
+                </p>
+              )}
+              {match.matchAdvice && (
+                <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55, paddingTop: 12, borderTop: '1px solid rgba(30,79,214,0.15)' }}>
+                  💡 {match.matchAdvice}
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="card" style={{ padding: 24, marginBottom: 16 }}>
             {user?.role === 'WORKER' && (
               <>

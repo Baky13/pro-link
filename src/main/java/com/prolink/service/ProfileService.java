@@ -297,7 +297,7 @@ public class ProfileService {
             "Другое"
     );
 
-    private WorkerDto.Response toWorkerResponse(WorkerProfile p) {
+    public WorkerDto.Response toWorkerResponse(WorkerProfile p) {
         WorkerDto.Response r = new WorkerDto.Response();
         r.setId(p.getId());
         r.setUserId(p.getUser().getId());

@@ -57,7 +57,7 @@ export default function VacanciesPage() {
     <div>
       {/* Mini hero */}
       <div style={{
-        background: 'linear-gradient(135deg, #5b5ef4 0%, #8b5cf6 100%)',
+        background: 'linear-gradient(135deg, #1e4fd6 0%, #2563eb 100%)',
         padding: 'clamp(28px, 5vw, 48px) 20px',
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
@@ -94,11 +94,11 @@ export default function VacanciesPage() {
             </div>
             <button
               onClick={() => setShowFilters(v => !v)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', borderRadius: 10, border: 'none', background: showFilters ? '#eeeeff' : 'var(--bg-secondary, #f1f3ff)', color: showFilters ? '#5b5ef4' : '#6b7280', fontWeight: 600, fontSize: 14, cursor: 'pointer', flexShrink: 0 }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', borderRadius: 10, border: 'none', background: showFilters ? '#e8eefc' : 'var(--bg-secondary, #f1f3ff)', color: showFilters ? '#1e4fd6' : '#6b7280', fontWeight: 600, fontSize: 14, cursor: 'pointer', flexShrink: 0 }}>
               <SlidersHorizontal size={15} />
               Фильтры
               {activeFiltersCount > 0 && (
-                <span style={{ background: '#5b5ef4', color: 'white', borderRadius: 10, padding: '1px 7px', fontSize: 11, fontWeight: 800 }}>{activeFiltersCount}</span>
+                <span style={{ background: '#1e4fd6', color: 'white', borderRadius: 10, padding: '1px 7px', fontSize: 11, fontWeight: 800 }}>{activeFiltersCount}</span>
               )}
             </button>
           </motion.div>
@@ -111,7 +111,7 @@ export default function VacanciesPage() {
             style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
             {EMPLOYMENT_TYPES.map(type => (
               <button key={type} onClick={() => setFilter('employmentType', filters.employmentType === type ? '' : type)}
-                style={{ padding: '5px 14px', borderRadius: 20, border: '1px solid', borderColor: filters.employmentType === type ? 'white' : 'rgba(255,255,255,0.3)', background: filters.employmentType === type ? 'white' : 'rgba(255,255,255,0.1)', color: filters.employmentType === type ? '#5b5ef4' : 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>
+                style={{ padding: '5px 14px', borderRadius: 20, border: '1px solid', borderColor: filters.employmentType === type ? 'white' : 'rgba(255,255,255,0.3)', background: filters.employmentType === type ? 'white' : 'rgba(255,255,255,0.1)', color: filters.employmentType === type ? '#1e4fd6' : 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>
                 {t[type]}
               </button>
             ))}

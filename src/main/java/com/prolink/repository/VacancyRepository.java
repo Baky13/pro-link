@@ -13,6 +13,7 @@ import java.util.List;
 
 public interface VacancyRepository extends JpaRepository<Vacancy, Long>, JpaSpecificationExecutor<Vacancy> {
 
+    Page<Vacancy> findByIsActiveTrue(Pageable pageable);
     Page<Vacancy> findByIsActiveTrueAndIsHotTrue(Pageable pageable);
     Page<Vacancy> findByIsActiveTrueAndIsUrgentTrue(Pageable pageable);
     Page<Vacancy> findByEmployerIdAndIsActiveTrue(Long employerId, Pageable pageable);
