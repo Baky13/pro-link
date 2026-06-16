@@ -78,6 +78,22 @@ export default function WorkerProfilePage() {
         </div>
       </div>
 
+      {/* Контакты + доступность */}
+      <div className="card" style={{ padding: 24, marginBottom: 16 }}>
+        <h3 style={{ fontWeight: 700, marginBottom: 12 }}>Контакты</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 14 }}>
+          {profile.user?.email && (
+            <div>✉️ <a href={`mailto:${profile.user.email}`} style={{ color: 'var(--primary)', fontWeight: 600 }}>{profile.user.email}</a></div>
+          )}
+          {profile.user?.phone && (
+            <div>📞 <a href={`tel:${profile.user.phone}`} style={{ color: 'var(--primary)', fontWeight: 600 }}>{profile.user.phone}</a></div>
+          )}
+          {profile.availableFrom && (
+            <div style={{ color: 'var(--text-secondary)' }}>📅 Готов приступить с {profile.availableFrom}</div>
+          )}
+        </div>
+      </div>
+
       {/* Резюме (важно для работодателя) */}
       {profile.resumeUrl && (
         <div className="card" style={{ padding: 24, marginBottom: 16 }}>
