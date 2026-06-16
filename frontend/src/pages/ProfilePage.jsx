@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { profileApi } from '../api'
 import { useAuthStore } from '../store'
 import { useT } from '../utils/i18n'
@@ -100,10 +100,6 @@ export default function ProfilePage() {
       toast.error(err.response?.data?.message || t.error)
     } finally { setSaving(false) }
   }
-
-  const avatarInputRef = useRef(null)
-  const resumeInputRef = useRef(null)
-  const logoInputRef = useRef(null)
 
   const handleFileUpload = async (e, type) => {
     const file = e.target.files[0]
@@ -235,9 +231,8 @@ export default function ProfilePage() {
             <div style={{ fontWeight: 700, fontSize: 18 }}>{user?.firstName} {user?.lastName}</div>
             <div style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 12 }}>{user?.email}</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button type="button" className="btn-outline" style={{ fontSize: 13, padding: '6px 14px', cursor: 'pointer', userSelect: 'none' }}
-                onClick={() => avatarInputRef.current?.click()}>📷 {t.uploadAvatar}</button>
-              <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleFileUpload(e, 'avatars')} />
+              <label htmlFor="upload-avatar" className="btn-outline" style={{ fontSize: 13, padding: '6px 14px', cursor: 'pointer', userSelect: 'none', display: 'inline-flex', alignItems: 'center' }}>📷 Выбрать фото</label>
+              <input id="upload-avatar" type="file" accept="image/*" style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} onChange={e => handleFileUpload(e, 'avatars')} />
               {profile.user?.avatarUrl && (
                 <button type="button" onClick={() => handleFileDelete('avatars', 'фото')}
                   style={{ fontSize: 13, padding: '6px 14px', border: '1px solid var(--border)', borderRadius: 8, background: 'transparent', color: 'var(--danger)', cursor: 'pointer', fontWeight: 500 }}>
@@ -246,9 +241,8 @@ export default function ProfilePage() {
               )}
               {user.role === 'WORKER' && (
                 <>
-                  <button type="button" className="btn-ghost" style={{ fontSize: 13, padding: '6px 14px', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', userSelect: 'none' }}
-                    onClick={() => resumeInputRef.current?.click()}>📄 {t.uploadResume}</button>
-                  <input ref={resumeInputRef} type="file" accept=".pdf,.doc,.docx" style={{ display: 'none' }} onChange={e => handleFileUpload(e, 'resumes')} />
+                  <label htmlFor="upload-resume" className="btn-ghost" style={{ fontSize: 13, padding: '6px 14px', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', userSelect: 'none', display: 'inline-flex', alignItems: 'center' }}>📄 Выбрать резюме</label>
+                  <input id="upload-resume" type="file" accept=".pdf,.doc,.docx" style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} onChange={e => handleFileUpload(e, 'resumes')} />
                   {profile.resumeUrl && (
                     <button type="button" onClick={() => handleFileDelete('resumes', 'резюме')}
                       style={{ fontSize: 13, padding: '6px 14px', border: '1px solid var(--border)', borderRadius: 8, background: 'transparent', color: 'var(--danger)', cursor: 'pointer', fontWeight: 500 }}>
@@ -263,9 +257,8 @@ export default function ProfilePage() {
               )}
               {user.role === 'EMPLOYER' && (
                 <>
-                  <button type="button" className="btn-ghost" style={{ fontSize: 13, padding: '6px 14px', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', userSelect: 'none' }}
-                    onClick={() => logoInputRef.current?.click()}>🏢 {t.uploadLogo}</button>
-                  <input ref={logoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleFileUpload(e, 'logos')} />
+                  <label htmlFor="upload-logo" className="btn-ghost" style={{ fontSize: 13, padding: '6px 14px', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', userSelect: 'none', display: 'inline-flex', alignItems: 'center' }}>🏢 Выбрать логотип</label>
+                  <input id="upload-logo" type="file" accept="image/*" style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} onChange={e => handleFileUpload(e, 'logos')} />
                   {profile.logoUrl && (
                     <button type="button" onClick={() => handleFileDelete('logos', 'логотип')}
                       style={{ fontSize: 13, padding: '6px 14px', border: '1px solid var(--border)', borderRadius: 8, background: 'transparent', color: 'var(--danger)', cursor: 'pointer', fontWeight: 500 }}>
